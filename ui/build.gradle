@@ -11,14 +11,6 @@ node {
     download = true
 }
 
-//task npmInstall(type: NpmTask) {
-//    args = ['install']
-//}
-
 tasks.register('cleanNodeModules', Delete) {
-//    dependsOn 'npmInstall'
     delete 'node_modules'
 }
-
-//clean.dependsOn cleanNodeModules
-//build.dependsOn npmInstall
