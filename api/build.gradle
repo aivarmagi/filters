@@ -32,6 +32,18 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+processResources {
+    it.dependsOn ':ui:npmInstall'
+}
+
+bootRun {
+    it.dependsOn ':ui:npmInstall'
+}
+
+clean {
+    it.dependsOn ':ui:cleanNodeModules'
+}
+
 test {
     useJUnitPlatform()
 }

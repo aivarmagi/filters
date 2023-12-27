@@ -1,0 +1,24 @@
+plugins {
+    id 'idea'
+    id "com.github.node-gradle.node" version "5.0.0"
+}
+
+apply plugin: 'com.github.node-gradle.node'
+
+node {
+    version = '20.10.0'
+    npmVersion = '10.2.3'
+    download = true
+}
+
+//task npmInstall(type: NpmTask) {
+//    args = ['install']
+//}
+
+tasks.register('cleanNodeModules', Delete) {
+//    dependsOn 'npmInstall'
+    delete 'node_modules'
+}
+
+//clean.dependsOn cleanNodeModules
+//build.dependsOn npmInstall
