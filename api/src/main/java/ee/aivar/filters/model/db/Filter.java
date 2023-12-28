@@ -13,11 +13,13 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "filter", schema = "public")
 @Data
-public class Filter {
+@EqualsAndHashCode(callSuper = false)
+public class Filter extends BaseEntity {
 
     @Id
     @SequenceGenerator(name = "filter_id_seq", sequenceName = "filter_id_seq", allocationSize = 1)

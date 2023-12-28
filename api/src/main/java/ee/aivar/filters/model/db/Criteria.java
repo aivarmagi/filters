@@ -11,12 +11,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Entity
 @Table(name = "criteria", schema = "public")
 @Data
-public class Criteria {
+@EqualsAndHashCode(callSuper = false)
+public class Criteria extends BaseEntity {
 
     @Id
     @SequenceGenerator(name = "criteria_id_seq", sequenceName = "criteria_id_seq", allocationSize = 1)
@@ -33,6 +37,7 @@ public class Criteria {
     @Column(name = "title")
     private String title;
 
+    @Temporal(TemporalType.DATE)
     @Column(name = "date")
     private Date date;
 }
