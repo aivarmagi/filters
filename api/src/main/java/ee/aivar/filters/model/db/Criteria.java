@@ -29,7 +29,7 @@ public class Criteria extends BaseEntity {
     @Id
     @SequenceGenerator(name = "criteria_id_seq", sequenceName = "criteria_id_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "criteria_id_seq")
-    private Long Id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "filter_id", nullable = false)

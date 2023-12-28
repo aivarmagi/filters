@@ -4,18 +4,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.LocalDate;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
 import org.junit.jupiter.api.Test;
 
 import ee.aivar.filters.model.api.CriteriaDTO;
 import ee.aivar.filters.model.db.Criteria;
 
+@SpringBootTest
 class CriteriaMapperTest {
 
-    private final CriteriaMapper criteriaMapper = new CriteriaMapper();
+    @Autowired
+    private CriteriaMapper criteriaMapper;
 
     @Test
     void toCriteria() {
         CriteriaDTO dto = new CriteriaDTO();
+        dto.setId(1L);
         dto.setAmount(100L);
         dto.setTitle("Test");
         dto.setDate(LocalDate.now());

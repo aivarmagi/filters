@@ -2,23 +2,17 @@ package ee.aivar.filters.mapper;
 
 import ee.aivar.filters.model.api.CriteriaDTO;
 import ee.aivar.filters.model.db.Criteria;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
-public class CriteriaMapper {
+@Mapper(componentModel = "spring", uses = FilterMapper.class)
+public interface CriteriaMapper {
 
-    public Criteria toCriteria(CriteriaDTO from) {
-        return Criteria.builder()
-                .amount(from.getAmount())
-                .title(from.getTitle())
-                .date(from.getDate())
-                .build();
-    }
+    CriteriaMapper INSTANCE = Mappers.getMapper(CriteriaMapper.class);
 
-    public CriteriaDTO toCriteriaDTO(Criteria from) {
-        return CriteriaDTO.builder()
-                .id(from.getId())
-                .amount(from.getAmount())
-                .title(from.getTitle())
-                .date(from.getDate())
-                .build();
-    }
+    @Mapping(target = "filter", ignore = true)
+    Criteria toCriteria(CriteriaDTO from);
+
+    CriteriaDTO toCriteriaDTO(Criteria from);
 }

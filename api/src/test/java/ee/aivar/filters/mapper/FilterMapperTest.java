@@ -6,6 +6,9 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
 import org.junit.jupiter.api.Test;
 
 import ee.aivar.filters.model.api.CriteriaDTO;
@@ -14,13 +17,16 @@ import ee.aivar.filters.model.db.Criteria;
 import ee.aivar.filters.model.db.Filter;
 import ee.aivar.filters.model.db.SelectionType;
 
+@SpringBootTest
 class FilterMapperTest {
 
-    private final FilterMapper filterMapper = new FilterMapper();
+    @Autowired
+    private FilterMapper filterMapper;
 
     @Test
     void testToFilter() {
         CriteriaDTO criteriaDTO = new CriteriaDTO();
+        criteriaDTO.setId(1L);
         criteriaDTO.setAmount(100L);
         criteriaDTO.setTitle("CriteriaDTOTitle");
         criteriaDTO.setDate(LocalDate.now());

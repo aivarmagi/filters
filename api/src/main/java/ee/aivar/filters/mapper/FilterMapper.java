@@ -2,28 +2,15 @@ package ee.aivar.filters.mapper;
 
 import ee.aivar.filters.model.api.FilterDTO;
 import ee.aivar.filters.model.db.Filter;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
 
-public class FilterMapper {
+@Mapper(componentModel = "spring", uses = CriteriaMapper.class)
+public interface FilterMapper {
 
-    public Filter toFilter(FilterDTO from) {
-        return Filter.builder()
-                .id(from.getId())
-                .name(from.getName())
-                .selectionType(from.getSelectionType())
-                .criterias(from.getCriterias().stream()
-                        .map(new CriteriaMapper()::toCriteria)
-                        .collect(java.util.stream.Collectors.toSet()))
-                .build();
-    }
+    FilterMapper INSTANCE = Mappers.getMapper(FilterMapper.class);
 
-    public FilterDTO toFilterDTO(Filter from) {
-        return FilterDTO.builder()
-                .id(from.getId())
-                .name(from.getName())
-                .selectionType(from.getSelectionType())
-                .criterias(from.getCriterias().stream()
-                        .map(new CriteriaMapper()::toCriteriaDTO)
-                        .collect(java.util.stream.Collectors.toSet()))
-                .build();
-    }
+    Filter toFilter(FilterDTO from);
+
+    FilterDTO toFilterDTO(Filter from);
 }
