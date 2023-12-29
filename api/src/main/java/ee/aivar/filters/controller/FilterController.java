@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ee.aivar.filters.model.api.FilterDTO;
 import ee.aivar.filters.service.FilterService;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 @RestController
 @RequestMapping("/api/v1/filters")
 public class FilterController {
@@ -26,6 +28,7 @@ public class FilterController {
     }
 
     @GetMapping
+    @Operation(summary = "Get all filters with pagination")
     public ResponseEntity<Page<FilterDTO>> getAllFilters(Pageable pageable) {
         Page<FilterDTO> filters = filterService.getAllFilters(pageable);
 
@@ -33,6 +36,7 @@ public class FilterController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get filter by id")
     public ResponseEntity<FilterDTO> getFilterById(@PathVariable Long id) {
         FilterDTO filter = filterService.getFilterById(id);
 
@@ -40,6 +44,7 @@ public class FilterController {
     }
 
     @PostMapping
+    @Operation(summary = "Create new filter")
     public ResponseEntity<FilterDTO> createFilter(@RequestBody FilterDTO filterDTO) {
         FilterDTO createdFilter = filterService.createFilter(filterDTO);
 
@@ -47,6 +52,7 @@ public class FilterController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update filter by id")
     public ResponseEntity<FilterDTO> updateFilter(@PathVariable Long id, @RequestBody FilterDTO filterDTO) {
         FilterDTO updatedFilter = filterService.updateFilter(id, filterDTO);
 
@@ -54,6 +60,7 @@ public class FilterController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete filter by id")
     public ResponseEntity<Void> deleteFilter(@PathVariable Long id) {
         filterService.deleteFilter(id);
 
