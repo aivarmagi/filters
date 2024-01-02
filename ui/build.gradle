@@ -13,4 +13,16 @@ node {
 
 tasks.register('cleanNodeModules', Delete) {
     delete 'node_modules'
+    delete 'dist'
+}
+
+tasks.register ('buildFrontend', Exec) {
+    dependsOn 'cleanNodeModules','npmInstall'
+    commandLine 'npm', 'run', 'build'
+}
+
+tasks.register ('copyFrontend', Copy) {
+    it.dependsOn 'buildFrontend'
+    from 'dist'
+    into '../api/src/main/resources/static'
 }
