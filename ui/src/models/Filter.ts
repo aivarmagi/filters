@@ -5,11 +5,10 @@ export default class Filter {
     name: string;
     selectionType: string;
     criterias: Criteria[];
+}
 
-    constructor(id: number, name: string, type: string, criterias: Criteria[]) {
-        this.id = id;
-        this.name = name;
-        this.selectionType = type;
-        this.criterias = criterias;
-    }
+export enum FilterSelectionType {
+    SELECTION_1 = 'A',
+    SELECTION_2 = 'B',
+    SELECTION_3 = 'C',
 }
