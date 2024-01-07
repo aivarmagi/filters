@@ -12,9 +12,12 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import org.junit.jupiter.api.Test;
 
+import ee.aivar.filters.enums.CriteriaDate;
+import ee.aivar.filters.enums.CriteriaName;
+import ee.aivar.filters.enums.CriteriaTitle;
+import ee.aivar.filters.enums.Selection;
 import ee.aivar.filters.model.db.Criteria;
 import ee.aivar.filters.model.db.Filter;
-import ee.aivar.filters.model.db.SelectionType;
 
 @DataJpaTest
 class CriteriaRepositoryTest {
@@ -29,15 +32,15 @@ class CriteriaRepositoryTest {
     public void whenFindById_thenReturnCriteria() {
         Filter filter = new Filter();
         filter.setName("Test");
-        filter.setSelectionType(SelectionType.SELECTION_1);
+        filter.setSelection(Selection.SELECTION_1);
         filter.setCriterias(new HashSet<>());
         entityManager.persist(filter);
 
         Criteria criteria = new Criteria();
-        criteria.setAmount(100L);
-        criteria.setTitle("Title");
+        criteria.setName(CriteriaName.DATE);
+        criteria.setOperator(CriteriaDate.FROM.toString());
+        criteria.setValue(LocalDate.now().toString());
         criteria.setFilter(filter);
-        criteria.setDate(LocalDate.now());
         entityManager.persist(criteria);
         entityManager.flush();
 

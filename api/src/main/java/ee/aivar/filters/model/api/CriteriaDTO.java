@@ -1,7 +1,5 @@
 package ee.aivar.filters.model.api;
 
-import java.time.LocalDate;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +16,7 @@ import lombok.Setter;
 public class CriteriaDTO {
 
     private Long id;
-    private Long amount;
-    private String title;
-    private LocalDate date;
+    private String name;
+    private String operator;
+    private String value;
 }

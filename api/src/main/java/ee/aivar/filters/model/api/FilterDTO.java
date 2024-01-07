@@ -3,7 +3,7 @@ package ee.aivar.filters.model.api;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import ee.aivar.filters.model.db.SelectionType;
+import ee.aivar.filters.enums.Selection;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,6 +20,6 @@ public class FilterDTO {
 
     private Long id;
     private String name;
-    private SelectionType selectionType;
+    private Selection selection;
     private Set<CriteriaDTO> criterias;
 }

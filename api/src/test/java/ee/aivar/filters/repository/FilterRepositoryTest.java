@@ -12,7 +12,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.junit.jupiter.api.Test;
 
 import ee.aivar.filters.model.db.Filter;
-import ee.aivar.filters.model.db.SelectionType;
+import ee.aivar.filters.enums.Selection;
 
 @DataJpaTest
 class FilterRepositoryTest {
@@ -27,7 +27,7 @@ class FilterRepositoryTest {
     public void whenFindById_thenReturnFilter() {
         Filter filter = new Filter();
         filter.setName("Test");
-        filter.setSelectionType(SelectionType.SELECTION_1);
+        filter.setSelection(Selection.SELECTION_1);
         filter.setCriterias(new HashSet<>());
         entityManager.persist(filter);
         entityManager.flush();

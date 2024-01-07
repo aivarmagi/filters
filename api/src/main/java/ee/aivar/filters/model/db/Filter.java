@@ -2,6 +2,7 @@ package ee.aivar.filters.model.db;
 
 import java.util.Set;
 
+import ee.aivar.filters.enums.Selection;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -39,7 +40,7 @@ public class Filter extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "selection")
-    private SelectionType selectionType;
+    private Selection selection;
 
     @OneToMany(mappedBy = "filter")
     private Set<Criteria> criterias;

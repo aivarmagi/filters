@@ -1,9 +1,10 @@
 package ee.aivar.filters.model.db;
 
-import java.time.LocalDate;
-
+import ee.aivar.filters.enums.CriteriaName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -35,12 +36,13 @@ public class Criteria extends BaseEntity {
     @JoinColumn(name = "filter_id", nullable = false)
     private Filter filter;
 
-    @Column(name = "amount")
-    private Long amount;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "criteria_name")
+    private CriteriaName name;
 
-    @Column(name = "title")
-    private String title;
+    @Column(name = "criteria_operator")
+    private String operator;
 
-    @Column(name = "date")
-    private LocalDate date;
+    @Column(name = "criteria_value")
+    private String value;
 }

@@ -47,7 +47,7 @@ public class FilterService {
         Filter filter = filterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Filter not found"));
         filter.setName(filterDTO.getName());
-        filter.setSelectionType(filterDTO.getSelectionType());
+        filter.setSelection(filterDTO.getSelection());
         filter.setCriterias(filterDTO.getCriterias().stream()
                 .map(criteriaMapper::toCriteria)
                 .collect(Collectors.toSet()));

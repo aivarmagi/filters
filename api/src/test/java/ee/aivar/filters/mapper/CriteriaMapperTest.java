@@ -9,6 +9,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import org.junit.jupiter.api.Test;
 
+import ee.aivar.filters.enums.CriteriaDate;
+import ee.aivar.filters.enums.CriteriaName;
+import ee.aivar.filters.enums.CriteriaTitle;
 import ee.aivar.filters.model.api.CriteriaDTO;
 import ee.aivar.filters.model.db.Criteria;
 
@@ -22,30 +25,30 @@ class CriteriaMapperTest {
     void toCriteria() {
         CriteriaDTO dto = new CriteriaDTO();
         dto.setId(1L);
-        dto.setAmount(100L);
-        dto.setTitle("Test");
-        dto.setDate(LocalDate.now());
+        dto.setName(CriteriaName.DATE.toString());
+        dto.setOperator(CriteriaDate.EQUAL.toString());
+        dto.setValue(LocalDate.now().toString());
 
         Criteria criteria = criteriaMapper.toCriteria(dto);
 
-        assertEquals(dto.getAmount(), criteria.getAmount());
-        assertEquals(dto.getTitle(), criteria.getTitle());
-        assertEquals(dto.getDate(), criteria.getDate());
+        assertEquals(dto.getName(), criteria.getName().toString());
+        assertEquals(dto.getOperator(), criteria.getOperator());
+        assertEquals(dto.getValue(), criteria.getValue());
     }
 
     @Test
     void toCriteriaDTO() {
         Criteria criteria = new Criteria();
         criteria.setId(2L);
-        criteria.setAmount(200L);
-        criteria.setTitle("Test");
-        criteria.setDate(LocalDate.now());
+        criteria.setName(CriteriaName.TITLE);
+        criteria.setOperator(CriteriaTitle.CONTAINS.toString());
+        criteria.setValue("Meow");
 
         CriteriaDTO dto = criteriaMapper.toCriteriaDTO(criteria);
 
         assertEquals(criteria.getId(), dto.getId());
-        assertEquals(criteria.getAmount(), dto.getAmount());
-        assertEquals(criteria.getTitle(), dto.getTitle());
-        assertEquals(criteria.getDate(), dto.getDate());
+        assertEquals(criteria.getName().toString(), dto.getName());
+        assertEquals(criteria.getOperator(), dto.getOperator());
+        assertEquals(criteria.getValue(), dto.getValue());
     }
 }
