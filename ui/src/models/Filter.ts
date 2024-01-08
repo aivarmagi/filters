@@ -3,7 +3,7 @@ import type Criteria from "@/models/Criteria";
 export default class Filter {
     id: number;
     name: string;
-    selectionType: string;
+    selection: FilterSelectionType;
     criterias: Criteria[];
 }
 

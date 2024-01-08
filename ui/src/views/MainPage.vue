@@ -3,23 +3,35 @@ import {onMounted, ref} from "vue";
 import filterService   from "@/services/filterService";
 import Filter, {FilterSelectionType} from "@/models/Filter";
 import {BContainer} from "bootstrap-vue-next";
+import TextInput from "@/components/form/TextInput.vue";
+import RadioGroup from "@/components/form/RadioGroup.vue";
+import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
+import type {Option} from "@/models/Option";
+import type Criteria from "@/models/Criteria";
+import Loading from "@/components/Loading.vue";
 
 const filters = ref<Filter[]>([]);
-const loading = ref(true);
-const pageSize = ref(1);
+const loadInitialFilters = ref(true);
+const loadAdditionalFilters = ref(false);
+const loadError = ref(false);
+const pageSize = ref(5);
 const currentPage = ref(1);
 const totalRows = ref(0);
 const sortField = ref('id');
-const sortDesc = ref(true);
+const sortDesc = ref(false);
 const openCollapseId = ref(null as number);
-const currentFilter = ref(null as Filter)
+const currentFilter = ref(undefined as Filter)
+const filterSaving = ref(false);
+const showDisclaimer = ref(true);
 
-const selectionTypes = Object.keys(FilterSelectionType).map(key => {
+const selectionTypeOptions: Option[] = Object.keys(FilterSelectionType).map(key => {
   return {
     text: FilterSelectionType[key],
     value: key,
   }
 });
+
+const pageSizeOptions: Option[] = [{text: '1', value: 1}, {text: '5', value: 5}, {text: '10', value: 10}];
 
 const getCriteriasCount = (item: Filter) => {
   return item.criterias.length;
@@ -27,8 +39,8 @@ const getCriteriasCount = (item: Filter) => {
 
 const toggleCollapse = (item: Filter) => {
   if (openCollapseId.value === item.id) {
-    openCollapseId.value = null;
-    currentFilter.value = null;
+    openCollapseId.value = undefined;
+    currentFilter.value = undefined;
     return;
   }
 
@@ -36,65 +48,100 @@ const toggleCollapse = (item: Filter) => {
   currentFilter.value = { ...item }
 };
 
-const onSortChanged = async (field: string, sortDescending: boolean) => {
-  await loadFilters(field, sortDescending, currentPage.value)
+const onDisclaimerClose = () => {
+  showDisclaimer.value = false;
+  //todo save it to local storage?
 };
 
-const onPaginationChanged = async (sort) => {
-  sort.preventDefault();
-  //todo
+const onSortChanged = async (field: string, sortDescending: boolean) => {
+  await loadFilters(field, sortDescending, currentPage.value, pageSize.value)
+};
+
+const onPaginationChanged = async (event, page) => {
+  event.preventDefault();
+  await loadFilters(sortField.value, sortDesc.value, page, pageSize.value)
+};
+
+const onCriteriaUpdated = (val: Criteria, index: number) => {
+  currentFilter.value.criterias[index] = {...val}
+};
+
+const onFormSave = (event) => {
+  event.preventDefault();
+  filterSaving.value = true;
+  console.log('values to save', currentFilter.value);
+  //todo save and toast
+};
+
+const onPageSizeChanged = async (size) => {
+  await loadFilters(sortField.value, sortDesc.value, currentPage.value, size)
 };
 
 const loadFilters = async (field: string, sortDescending: boolean, page: number, size: number) => {
   try {
+    if (loadInitialFilters.value === false) {
+      loadAdditionalFilters.value = true;
+    }
+
     const response = await filterService.getFilters(field, sortDescending, page, size);
     filters.value = response.data.content;
     totalRows.value = response.data.totalElements;
   } catch (error) {
-    console.error(error);
+    console.error('Found error:', error);
+    loadError.value = true;
   } finally {
-    loading.value = false;
     sortField.value = field;
     sortDesc.value = sortDescending;
     currentPage.value = page;
     pageSize.value = size;
+
+    if (loadInitialFilters.value) {
+      loadInitialFilters.value = false;
+    } else {
+      loadAdditionalFilters.value = false;
+    }
   }
 };
 
-onMounted(() => loadFilters('id', false, 1, 10));
+onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value));
 </script>
 
 <template>
   <BContainer fluid>
     <BRow class="mt-4">
       <BCol class="text-center">
+        <BAlert dismissible variant="secondary" @update:model-value="onDisclaimerClose" :model-value="showDisclaimer">
+          This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
+          It should contain CRUD functionality at the end. However only getting filters from backend is currently functional.<br/>
+          Queries to backend are delayed by 500ms to simulate real world scenario.
+        </BAlert>
+
         <Loading
             :message="'Loading filters ...'"
-            :loading="loading"
+            :loading="loadInitialFilters"
         />
+
+        <BAlert variant="danger" :model-value="loadError">
+          Error loading filters. Please try again later.
+        </BAlert>
 
         <BTableSimple
             class="filters-table"
             hover
             responsive
-            v-if="!loading && filters.length > 0"
+            v-if="filters.length > 0"
         >
+<!--            v-if="(!loadInitialFilters || !loadAdditionalFilters) && filters.length > 0"-->
           <BThead>
             <BTr>
-              <BTh
-                  class="col-1 hover-pointer"
-                  @click="onSortChanged('id', !sortDesc)"
-              >
+              <BTh class="col-1 hover-pointer" @click="onSortChanged('id', !sortDesc)">
                 ID
                 <span v-if="'id' === sortField">
                   <IIconoirSortUp v-if="sortDesc" />
                   <IIconoirSortDown v-else />
                 </span>
               </BTh>
-              <BTh
-                  class="hover-pointer col-auto"
-                  @click="onSortChanged('name', !sortDesc)"
-              >
+              <BTh class="hover-pointer col-auto text-start" @click="onSortChanged('name', !sortDesc)">
                 Name
                 <span v-if="'name' === sortField">
                   <IIconoirSortUp v-if="sortDesc" />
@@ -112,16 +159,16 @@ onMounted(() => loadFilters('id', false, 1, 10));
                 v-for="filter in filters"
                 :key="filter.id"
             >
-              <BTr class="align-middle bg-info">
-                <BTd>{{ filter.id }}</BTd>
-                <BTd>{{ filter.name }}</BTd>
-                <BTd>
+              <BTr class="align-middle">
+                <BTd class="bg-light">{{ filter.id }}</BTd>
+                <BTd class="bg-light text-start">{{ filter.name }}</BTd>
+                <BTd class="bg-light">
                   <BBadge pill variant="secondary">
                     {{ getCriteriasCount(filter) }}
                   </BBadge>
                 </BTd>
-                <BTd>{{ filter.selectionType }}</BTd>
-                <BTd class="text-end">
+                <BTd class="bg-light">{{ FilterSelectionType[filter.selection] }}</BTd>
+                <BTd class="text-end bg-light">
                   <IBxsEdit
                     class="me-2 hover-pointer"
                     role="button"
@@ -130,79 +177,105 @@ onMounted(() => loadFilters('id', false, 1, 10));
 
                   <ITypcnDelete
                     class="hover-pointer me-2"
-                    @click="() => console.log('Delete ' + filter.id)"
+                    @click="() => console.log('TODO Delete ' + filter.id)"
                   />
                 </BTd>
               </BTr>
 
-              <BTr class="text-start" v-if="currentFilter">
+              <BTr class="text-start" v-if="filter.id === openCollapseId">
                 <BTd class="p-0" colspan="5">
-                  <BCollapse
-                      class="clearfix"
-                      :id="'collapse-' + filter.id"
-                      :visible="openCollapseId === filter.id"
-                  >
-                    <BCard
-                        class="border-0"
-                        :title="'Edit filter'"
-                    >
-                      <BForm @submit="console.log">
-                        <BRow>
-                          <BCol class="text-start col-md-6 col-12">
-                              <BFormGroup id="input-group-2" label="Name" label-for="input-2">
-                                <BFormInput id="input-2" v-model="currentFilter.name" placeholder="Enter name" required />
-                              </BFormGroup>
-                          </BCol>
+                  <BCard class="border-0" :title="'Edit filter'">
+                    <BForm @submit="onFormSave">
+                      <BRow>
+                        <BCol class="text-start mt-3">
+                          <TextInput
+                              class-name="'pb-0'"
+                              required
+                              :id="`${currentFilter.id}`"
+                              :label="'Name'"
+                              :placeholder="'Enter name'"
+                              :value="currentFilter.name"
+                              @update-value="(val) => currentFilter.name = val"
+                          />
+                        </BCol>
+                      </BRow>
 
-                          <BCol class="col-xs-12 col-md-6 col-12">
-                              <BFormGroup class="align-content-start" id="input-group-3" label="Selection type" label-for="input-3">
-                                <BFormRadioGroup
-                                    id="radio-group-1"
-                                    v-model="currentFilter.selectionType"
-                                    :options="selectionTypes"
-                                    name="selection-type"
-                                />
-                              </BFormGroup>
-                          </BCol>
-                        </BRow>
+                      <BRow>
+                        <BCol class="text-start mt-0">
+                          <CriteriaGroup
+                              :criterias="currentFilter.criterias"
+                              :id="`${currentFilter.id}`"
+                              :label="'Criteria'"
+                              @update-criteria="onCriteriaUpdated"
+                          />
+                        </BCol>
+                      </BRow>
 
-                        <BRow class="mt-3">
-                          <BCol class="text-end">
-                              <BButton
-                                  class="me-2"
-                                  variant="outline-secondary"
-                                  @click="() => toggleCollapse(filter)"
-                              >
-                                Close
-                              </BButton>
+                      <BRow>
+                        <BCol class="text-start mt-3">
+                          <RadioGroup
+                              :id="`${currentFilter.id}`"
+                              :options="selectionTypeOptions"
+                              :label="'Selection'"
+                              :value="currentFilter.selection"
+                              @update-value="(val) => currentFilter.selection = val"
+                          />
+                        </BCol>
+                      </BRow>
 
-                              <BButton
-                                  @click="() => console.log(currentFilter)"
-                              >
-                                Edit
-                              </BButton>
-                          </BCol>
-                        </BRow>
-                      </BForm>
-                    </BCard>
-                  </BCollapse>
+                      <BRow class="mt-3">
+                        <BCol class="text-end">
+                            <BButton
+                                class="me-2"
+                                variant="outline-secondary"
+                                @click="() => toggleCollapse(filter)"
+                            >
+                              Close
+                            </BButton>
+                            <BButton
+                                type="submit"
+                                disabled
+                                :loading="filterSaving"
+                                :loading-text="'Saving ...'"
+                            >
+                              Save changes
+                            </BButton>
+                        </BCol>
+                      </BRow>
+                    </BForm>
+                  </BCard>
                 </BTd>
               </BTr>
             </template>
           </BTbody>
         </BTableSimple>
 
-        <BPagination
-            align="center"
-            size="sm"
-            v-if="!loading && filters.length > 0"
-            v-model="currentPage"
-            :first-text="'First'"
-            :last-text="'Last'"
-            :per-page="pageSize"
-            :total-rows="totalRows"
-            @page-click="onPaginationChanged"
-        ></BPagination>
+        <BRow v-if="filters?.length > 0">
+          <BCol class="col-auto ms-3">
+            <BFormSelect
+                size="sm"
+                v-model="pageSize"
+                :id="'page-size-select'"
+                :options="pageSizeOptions"
+                @change="onPageSizeChanged"
+            />
+          </BCol>
+          <BCol class="col-1">
+            <BPagination
+                align="end"
+                size="sm"
+                v-model="currentPage"
+                :hide-goto-end-buttons="true"
+                :per-page="pageSize"
+                :total-rows="totalRows"
+                @page-click="onPaginationChanged"
+            />
+          </BCol>
+
+          <BCol class="col-auto mt-1">
+            <Loading :loading="loadAdditionalFilters"/>
+          </BCol>
+        </BRow>
       </BCol>
     </BRow>
   </BContainer>

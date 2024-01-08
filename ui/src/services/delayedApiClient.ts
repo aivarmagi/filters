@@ -6,7 +6,7 @@ export function delayedGet<T>(url: string, delay: number, config?: AxiosRequestC
         setTimeout(() => {
             apiClient.get<T>(url, config)
                 .then(resolve)
-                .catch(reject);
+                .catch((error) => reject(error.code));
         }, delay);
     });
 }

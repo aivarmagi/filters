@@ -7,7 +7,7 @@ const API_URL = 'http://localhost:8080/api/v1';
 export default {
     async getFilters(field: string, sortDesc: boolean, page: number, pageSize: number): Promise<AxiosResponse<PageableResponse<Filter>>> {
         try {
-            return await delayedGet<PageableResponse<Filter>>(`${API_URL}/filters`, 2000, {
+            return await delayedGet<PageableResponse<Filter>>(`${API_URL}/filters`, 500, {
                 params: {
                     page: page - 1,
                     size: pageSize,
