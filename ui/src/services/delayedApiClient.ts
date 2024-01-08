@@ -10,3 +10,13 @@ export function delayedGet<T>(url: string, delay: number, config?: AxiosRequestC
         }, delay);
     });
 }
+
+export function delayedPut<T>(url: string, data: T, delay: number, config?: AxiosRequestConfig): Promise<VoidFunction> {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            apiClient.put<T>(url, data, config)
+                .then(resolve)
+                .catch((error) => reject(error.code));
+        }, delay);
+    });
+}

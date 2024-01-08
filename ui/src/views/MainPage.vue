@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import {onMounted, ref} from "vue";
-import filterService   from "@/services/filterService";
+import filterService from "@/services/filterService";
 import Filter, {FilterSelectionType} from "@/models/Filter";
-import {BContainer} from "bootstrap-vue-next";
+import {BContainer, useToast} from "bootstrap-vue-next";
 import TextInput from "@/components/form/TextInput.vue";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
 import type Criteria from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
+
+const {show} = useToast();
 
 const filters = ref<Filter[]>([]);
 const loadInitialFilters = ref(true);
@@ -68,11 +70,27 @@ const onCriteriaUpdated = (val: Criteria, index: number) => {
   currentFilter.value.criterias[index] = {...val}
 };
 
-const onFormSave = (event) => {
+//todo filter reset
+
+const onFormSave = async (event) => {
   event.preventDefault();
   filterSaving.value = true;
+
   console.log('values to save', currentFilter.value);
+  await filterService.putFilter(currentFilter.value)
+      .then(() => {
+        filterSaving.value = false;
+        console.log('should display toast')
+        show('Filter saved successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+        // toggleCollapse(currentFilter.value);
   //todo save and toast
+      })
+      .catch((error) => {
+        console.error('Error updating filter:', error);
+      })
+      .finally(() => {
+        filterSaving.value = false;
+      });
 };
 
 const onPageSizeChanged = async (size) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
@@ -87,7 +105,7 @@ const loadFilters = async (field: string, sortDescending: boolean, page: number,
     filters.value = response.data.content;
     totalRows.value = response.data.totalElements;
   } catch (error) {
-    console.error('Found error:', error);
+    console.error('Error loading filters:', error);
     loadError.value = true;
   } finally {
     sortField.value = field;
@@ -111,7 +129,7 @@ const loadFilter = async (id: number) => {
     const response = await filterService.getFilter(id);
     currentFilter.value = response.data;
   } catch (error) {
-    console.error('Found error:', error);
+    console.error('Error loading filter:', error);
     loadFilterError.value = true;
   } finally {
     loadSingleFilter.value = false;
