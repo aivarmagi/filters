@@ -13,7 +13,9 @@ import Loading from "@/components/Loading.vue";
 const filters = ref<Filter[]>([]);
 const loadInitialFilters = ref(true);
 const loadAdditionalFilters = ref(false);
+const loadSingleFilter = ref(false);
 const loadError = ref(false);
+const loadFilterError = ref(false);
 const pageSize = ref(5);
 const currentPage = ref(1);
 const totalRows = ref(0);
@@ -37,7 +39,7 @@ const getCriteriasCount = (item: Filter) => {
   return item.criterias.length;
 };
 
-const toggleCollapse = (item: Filter) => {
+const toggleCollapse = async (item: Filter) => {
   if (openCollapseId.value === item.id) {
     openCollapseId.value = undefined;
     currentFilter.value = undefined;
@@ -45,7 +47,7 @@ const toggleCollapse = (item: Filter) => {
   }
 
   openCollapseId.value = item.id;
-  currentFilter.value = { ...item }
+  await loadFilter(item.id);
 };
 
 const onDisclaimerClose = () => {
@@ -73,9 +75,7 @@ const onFormSave = (event) => {
   //todo save and toast
 };
 
-const onPageSizeChanged = async (size) => {
-  await loadFilters(sortField.value, sortDesc.value, currentPage.value, size)
-};
+const onPageSizeChanged = async (size) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
 
 const loadFilters = async (field: string, sortDescending: boolean, page: number, size: number) => {
   try {
@@ -100,6 +100,21 @@ const loadFilters = async (field: string, sortDescending: boolean, page: number,
     } else {
       loadAdditionalFilters.value = false;
     }
+  }
+};
+
+const loadFilter = async (id: number) => {
+  loadFilterError.value = false;
+  loadSingleFilter.value = true;
+
+  try {
+    const response = await filterService.getFilter(id);
+    currentFilter.value = response.data;
+  } catch (error) {
+    console.error('Found error:', error);
+    loadFilterError.value = true;
+  } finally {
+    loadSingleFilter.value = false;
   }
 };
 
@@ -131,7 +146,6 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
             responsive
             v-if="filters.length > 0"
         >
-<!--            v-if="(!loadInitialFilters || !loadAdditionalFilters) && filters.length > 0"-->
           <BThead>
             <BTr>
               <BTh class="col-1 hover-pointer" @click="onSortChanged('id', !sortDesc)">
@@ -184,7 +198,17 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
 
               <BTr class="text-start" v-if="filter.id === openCollapseId">
                 <BTd class="p-0" colspan="5">
-                  <BCard class="border-0" :title="'Edit filter'">
+                  <Loading
+                      class="text-center my-3"
+                      :message="'Loading filter ...'"
+                      :loading="loadSingleFilter"
+                  />
+
+                  <BAlert class="text-center mx-3 mt-3" variant="danger" :model-value="loadFilterError">
+                    Error loading filter. Please try again later.
+                  </BAlert>
+
+                  <BCard class="border-0" :title="'Edit filter'" v-if="!loadSingleFilter && !loadFilterError">
                     <BForm @submit="onFormSave">
                       <BRow>
                         <BCol class="text-start mt-3">
@@ -234,7 +258,6 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                             </BButton>
                             <BButton
                                 type="submit"
-                                disabled
                                 :loading="filterSaving"
                                 :loading-text="'Saving ...'"
                             >
@@ -260,6 +283,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                 @change="onPageSizeChanged"
             />
           </BCol>
+
           <BCol class="col-1">
             <BPagination
                 align="end"

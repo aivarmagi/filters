@@ -91,6 +91,7 @@ watch(() => props.criteria, (newCriteria) => {
 
       <BCol class="col-auto px-0 me-3 mt-1">
         <ITypcnDelete
+            disabled
             class="hover-pointer"
             @click="() => console.log('TODO: Delete criteria ' + id)"
         />
