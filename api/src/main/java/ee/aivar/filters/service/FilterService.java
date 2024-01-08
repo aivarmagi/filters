@@ -1,10 +1,12 @@
 package ee.aivar.filters.service;
 
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import ee.aivar.filters.exception.ResourceNotFoundException;
 import ee.aivar.filters.mapper.CriteriaMapper;
@@ -43,24 +45,32 @@ public class FilterService {
         return filterMapper.toFilterDTO(savedFilter);
     }
 
+    @Transactional
     public FilterDTO updateFilter(Long id, FilterDTO filterDTO) {
         Filter filter = filterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Filter not found"));
         filter.setName(filterDTO.getName());
         filter.setSelection(filterDTO.getSelection());
-        filter.setCriterias(filterDTO.getCriterias().stream()
+
+        filter.getCriterias().clear();
+
+        var criterias = filterDTO.getCriterias().stream()
                 .map(criteriaMapper::toCriteria)
-                .collect(Collectors.toSet()));
+                .collect(Collectors.toSet());
+        criterias.forEach(criteria -> criteria.setFilter(filter));
+        filter.setCriterias(criterias);
+
         Filter updatedFilter = filterRepository.save(filter);
 
         return filterMapper.toFilterDTO(updatedFilter);
     }
 
+    @Transactional
     public void deleteFilter(Long id) {
-        if (!filterRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Filter not found");
-        }
+        Filter filter = filterRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Filter not found"));
+        filter.setDeletedAt(LocalDateTime.now());
 
-        filterRepository.deleteById(id);
+        filterRepository.save(filter);
     }
 }

@@ -1,8 +1,10 @@
 package ee.aivar.filters.model.db;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 import ee.aivar.filters.enums.Selection;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -42,6 +44,6 @@ public class Filter extends BaseEntity {
     @Column(name = "selection")
     private Selection selection;
 
-    @OneToMany(mappedBy = "filter")
+    @OneToMany(mappedBy = "filter", cascade = CascadeType.ALL)
     private Set<Criteria> criterias;
 }

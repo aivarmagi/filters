@@ -1,5 +1,7 @@
 package ee.aivar.filters.model.db;
 
+import static jakarta.persistence.FetchType.*;
+
 import ee.aivar.filters.enums.CriteriaName;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,7 +34,7 @@ public class Criteria extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "criteria_id_seq")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = LAZY)
     @JoinColumn(name = "filter_id", nullable = false)
     private Filter filter;
 
