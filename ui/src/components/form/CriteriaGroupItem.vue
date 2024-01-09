@@ -46,15 +46,20 @@ const updateCriteria = (field: string, fieldValue: string, resetValueField?: boo
 }
 
 watch(() => props.criteria, (newCriteria) => {
-  name.value = newCriteria.name;
+  console.log('item ->', props.id ,'criteria changes to', newCriteria)
 
   const opts = getOperatorOptions(newCriteria.name);
-  if (!isEqual(opts, operatorOptions.value)) {
-    operatorOptions.value = opts;
-    operator.value = opts[0].value;
-    criteriaValue.value = '';
-    emit('updateOperator', opts[0].value)
-  }
+  console.log('item ->', props.id, 'opts', opts, 'criteria changed?:', isEqual(props.criteria, newCriteria))
+  // if (!isEqual(opts, operatorOptions.value)) {
+  //   operatorOptions.value = opts;
+  //   operator.value = opts[0].value;
+  //   criteriaValue.value = '';
+  //   emit('updateOperator', opts[0].value)
+  // } else {
+  //   name.value = newCriteria.name;
+  //   criteriaValue.value = newCriteria.value;
+  //   console.log('only name changed')
+  // }
 }, { deep: true });
 </script>
 
