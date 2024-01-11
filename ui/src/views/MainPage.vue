@@ -10,6 +10,7 @@ import type {Option} from "@/models/Option";
 import {type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
 import {Action} from "@/components/enums/Action";
+import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 
 const {show} = useToast();
 
@@ -27,6 +28,7 @@ const loadInitialFilters = ref(true);
 const resetFilterError = ref(false);
 const resettingFilter = ref(false);
 const showDisclaimer = ref(true);
+const showFormResetDialog = ref(false);
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -105,9 +107,20 @@ const onFormSave = async (event: any) => {
       });
 };
 
-const onFormReset = async (event: any) => {
+const onShowFormResetDialog = (event: any) => {
   event.preventDefault();
-  //todo modal for confirmation?
+  if (showFormResetDialog.value === false) {
+    showFormResetDialog.value = true;
+  }
+}
+
+const onCloseFormResetDialog = () => {
+  if (showFormResetDialog.value === true) {
+    showFormResetDialog.value = false;
+  }
+}
+
+const onFormReset = async () => {
   await getFilter(currentFilter.value!.id, Action.RESET)
 };
 
@@ -273,7 +286,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                   </BAlert>
 
                   <BCard class="border-0" :title="'Edit filter'" v-if="!loadingFilter && !loadFilterError && currentFilter">
-                    <BForm @reset="onFormReset" @submit="onFormSave">
+                    <BForm @reset="onShowFormResetDialog" @submit="onFormSave">
                       <BRow>
                         <BCol class="text-start mt-3">
                           <TextInput
@@ -382,6 +395,16 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
         </BRow>
       </BCol>
     </BRow>
+
+    <SimpleDialog
+        :button-cancel-text="'Close'"
+        :button-ok-text="'Yes'"
+        :id="'disclaimer-dialog'"
+        :message="'Are you sure you want to reset the form?'"
+        :show="showFormResetDialog"
+        @cancel="onCloseFormResetDialog"
+        @confirm="onFormReset"
+    />
   </BContainer>
 </template>
 
