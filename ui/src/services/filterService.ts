@@ -1,4 +1,4 @@
-import type Filter from "@/models/Filter";
+import type {Filter} from "@/models/Filter";
 import type {AxiosResponse} from "axios";
 import {delayedGet, delayedPut} from "@/services/delayedApiClient";
 
@@ -20,7 +20,7 @@ export default {
         }
     },
 
-    async getFilter(id: number): AxiosResponse<Filter> {
+    async getFilter(id: number): Promise<AxiosResponse<Filter>> {
         try {
             return await delayedGet<Filter>(`${API_URL}/filters/${id}`, QUERY_DELAY);
         } catch (error) {
@@ -28,7 +28,7 @@ export default {
         }
     },
 
-    async putFilter(filter: Filter):AxiosResponse<Filter> {
+    async putFilter(filter: Filter): Promise<AxiosResponse<Filter>> {
         try {
             return await delayedPut<Filter>(`${API_URL}/filters/${filter.id}`, filter, QUERY_DELAY);
         } catch (error) {

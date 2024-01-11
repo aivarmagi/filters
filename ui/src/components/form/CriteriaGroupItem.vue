@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type {Option} from "@/models/Option";
-import Criteria, {CriteriaName} from "@/models/Criteria";
-import {ref, watch} from "vue";
+import {type Criteria, CriteriaName} from "@/models/Criteria";
+import {onMounted, ref, watch} from "vue";
 import TextInput from "@/components/form/TextInput.vue";
 import {isEqual} from 'lodash';
 
@@ -10,57 +10,68 @@ const props = defineProps<{
   criteria: Criteria,
   dateOptions: Option[],
   id: string,
+  keepCriteriaValue?: boolean,
   nameOptions: Option[],
   titleOptions: Option[],
 }>()
 
 const emit = defineEmits<{
-  (e: 'updateOperator', val: string): void
+  (e: 'resetKeepCriteriaValue'): void
   (e: 'updateCriteria', val: Criteria): void
+  (e: 'updateField', field: string, value: string): void
 }>()
 
-const name = ref(props.criteria.name)
-const operator = ref(props.criteria.operator)
-const criteriaValue = ref(props.criteria.value || '')
+const name = ref("")
+const operator = ref("")
+const operatorOptions= ref<Option[]>([])
+const criteriaValue = ref("")
 
 const getOperatorOptions = (criteriaName: string): Option[] => {
-  if (criteriaName === CriteriaName.TITLE) {
+  if (CriteriaName.TITLE === criteriaName) {
     return props.titleOptions
-  } else if (criteriaName === CriteriaName.DATE) {
+  } else if (CriteriaName.DATE === criteriaName) {
     return props.dateOptions
   } else {
     return props.amountOptions
   }
 }
 
-const operatorOptions = ref(getOperatorOptions(name.value))
-
-const updateCriteria = (field: string, fieldValue: string, resetValueField?: boolean) => {
-  const newCriteria = {...props.criteria, [field]: fieldValue}
-
-  if (resetValueField) {
-    newCriteria.value = '';
-  }
-
-  emit('updateCriteria', newCriteria)
-}
-
 watch(() => props.criteria, (newCriteria) => {
-  console.log('item ->', props.id ,'criteria changes to', newCriteria)
-
-  const opts = getOperatorOptions(newCriteria.name);
-  console.log('item ->', props.id, 'opts', opts, 'criteria changed?:', isEqual(props.criteria, newCriteria))
-  // if (!isEqual(opts, operatorOptions.value)) {
-  //   operatorOptions.value = opts;
-  //   operator.value = opts[0].value;
-  //   criteriaValue.value = '';
-  //   emit('updateOperator', opts[0].value)
-  // } else {
-  //   name.value = newCriteria.name;
-  //   criteriaValue.value = newCriteria.value;
-  //   console.log('only name changed')
-  // }
+  if (newCriteria.name !== name.value) {
+    name.value = newCriteria.name;
+  } else if (newCriteria.operator !== operator.value) {
+    operator.value = newCriteria.operator;
+  } else if (newCriteria.value !== criteriaValue.value) {
+    criteriaValue.value = newCriteria.value;
+  }
 }, { deep: true });
+
+watch(() => name.value, (newVal) => {
+    if (newVal && !isEqual(operatorOptions.value, getOperatorOptions(newVal))) {
+      operatorOptions.value = getOperatorOptions(newVal);
+      operator.value = operatorOptions.value[0].value as string;
+
+      const newCriteriaValue = props.keepCriteriaValue ? props.criteria.value : '';
+      criteriaValue.value = newCriteriaValue;
+      emit('resetKeepCriteriaValue')
+
+      const newCriteria = {...props.criteria, name: newVal, operator: operatorOptions.value[0].value, value: newCriteriaValue}
+      emit('updateCriteria', newCriteria as Criteria)
+    }
+})
+
+watch(() => operator.value, (newVal) => {
+  if (operatorOptions.value?.every((opt: Option) => opt.value !== newVal)) {
+    operator.value = operatorOptions.value[0].value as string;
+  }
+})
+
+onMounted(() => {
+  name.value = props.criteria.name
+  operatorOptions.value = getOperatorOptions(name.value)
+  operator.value = props.criteria.operator
+  criteriaValue.value = props.criteria.value
+})
 </script>
 
 <template>
@@ -69,7 +80,6 @@ watch(() => props.criteria, (newCriteria) => {
         v-model="name"
         :id="'criteria-name-' + id"
         :options="nameOptions"
-        @change="(val) => updateCriteria('name', val, true)"
     />
   </BCol>
 
@@ -78,7 +88,7 @@ watch(() => props.criteria, (newCriteria) => {
         v-model="operator"
         :id="'criteria-operator-' + id"
         :options="operatorOptions"
-        @change="() => updateCriteria('operator', operator)"
+        @change="(val) => emit('updateField', 'operator', val as string)"
     />
   </BCol>
 
@@ -90,7 +100,7 @@ watch(() => props.criteria, (newCriteria) => {
             :id="'criteria-value-' + id"
             :placeholder="'Enter value'"
             :value="criteriaValue"
-            @update-value="(val) => updateCriteria('value', val)"
+            @update-value="(val) => emit('updateField', 'value', val)"
         />
       </BCol>
 

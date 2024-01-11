@@ -1,34 +1,34 @@
 <script setup lang="ts">
-import {ref, watch} from "vue";
-import Criteria, {CriteriaAmountType, CriteriaDateType, CriteriaTitleType, CriteriaName} from "@/models/Criteria";
+import {
+  type Criteria,
+  CriteriaAmountType, CriteriaDateType, CriteriaTitleType, CriteriaName,
+  type CriteriaNameRecord, type CriteriaAmountTypeRecord, type CriteriaTitleTypeRecord, type CriteriaDateTypeRecord
+} from "@/models/Criteria";
 import type {Option} from "@/models/Option";
 import CriteriaGroupItem from "@/components/form/CriteriaGroupItem.vue";
-import {isEqual} from "lodash";
 
-const props = defineProps<{
+defineProps<{
   id: string,
   criterias: Criteria[],
+  keepCriteriaValue?: boolean,
   label: string,
   labelCols?: number,
 }>()
 
 const emit = defineEmits<{
+  (e: 'resetKeepCriteriaValue'): void
   (e: 'updateCriteria', val: Criteria, index: number): void
+  (e: 'updateField', field: string, value: string, index: number): void
 }>()
 
-// const internalValues = ref(props.criterias)
-const nameOptions: Option[] = Object.keys(CriteriaName).map(key => ({text: CriteriaName[key], value: key}));
-const amountOptions: Option[] = Object.keys(CriteriaAmountType).map(key => ({text: CriteriaAmountType[key], value: key}));
-const titleOptions: Option[] = Object.keys(CriteriaTitleType).map(key => ({text: CriteriaTitleType[key], value: key,}));
-const dateOptions: Option[] = Object.keys(CriteriaDateType).map(key => ({text: CriteriaDateType[key], value: key,}));
-
-// watch(() => props.criterias, (newVal) => {
-//   console.log('group > criterias changed to', newVal);
-//   if (!isEqual(newVal, internalValues.value)) {
-//     console.log('reset group values')
-//     internalValues.value = {...newVal};
-//   }
-// }, { deep: true });
+const nameOptions: Option[] = Object.keys(CriteriaName).map(key =>
+    ({text: (CriteriaName as CriteriaNameRecord)[key], value: key}));
+const amountOptions: Option[] = Object.keys(CriteriaAmountType).map(key =>
+    ({text: (CriteriaAmountType as CriteriaAmountTypeRecord)[key], value: key}));
+const titleOptions: Option[] = Object.keys(CriteriaTitleType).map(key =>
+    ({text: (CriteriaTitleType as CriteriaTitleTypeRecord)[key], value: key}));
+const dateOptions: Option[] = Object.keys(CriteriaDateType).map(key =>
+    ({text: (CriteriaDateType as CriteriaDateTypeRecord)[key], value: key}));
 </script>
 
 <template>
@@ -45,11 +45,13 @@ const dateOptions: Option[] = Object.keys(CriteriaDateType).map(key => ({text: C
           :criteria="criteria"
           :date-options="dateOptions"
           :id="'criteria-group-item-' + index"
+          :keep-criteria-value="keepCriteriaValue"
           :name-options="nameOptions"
           :title-options="titleOptions"
+          @reset-keep-criteria-value="emit('resetKeepCriteriaValue')"
           @update-criteria="(val) => emit('updateCriteria', {...val}, index)"
+          @update-field="(field, value) => emit('updateField', field, value, index)"
       />
-<!--          @update-operator="(val) => criterias[index].operator = val"-->
     </BRow>
   </BFormGroup>
 </template>

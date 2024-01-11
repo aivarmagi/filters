@@ -1,4 +1,4 @@
-export default interface Criteria {
+export interface Criteria {
     id: number;
     name: CriteriaName;
     operator: string;
@@ -11,11 +11,15 @@ export enum CriteriaName {
     TITLE = 'TITLE',
 }
 
+export type CriteriaNameRecord = Record<string, CriteriaName>;
+
 export enum CriteriaAmountType {
     EQUAL = 'EQUAL',
     GREATER_THAN = 'GREATER_THAN',
     LESS_THAN = 'LESS_THAN',
 }
+
+export type CriteriaAmountTypeRecord = Record<string, CriteriaAmountType>;
 
 export enum CriteriaTitleType {
     CONTAINS = 'CONTAINS',
@@ -24,8 +28,12 @@ export enum CriteriaTitleType {
     ENDS_WITH = 'ENDS_WITH',
 }
 
+export type CriteriaTitleTypeRecord = Record<string, CriteriaTitleType>;
+
 export enum CriteriaDateType {
     EQUAL = 'EQUAL',
     FROM = 'FROM',
     TO = 'TO',
 }
+
+export type CriteriaDateTypeRecord = Record<string, CriteriaDateType>;
