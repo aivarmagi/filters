@@ -1,44 +1,48 @@
 <script setup lang="ts">
 import {onMounted, ref} from "vue";
 import filterService from "@/services/filterService";
-import Filter, {FilterSelectionType} from "@/models/Filter";
+import {Filter, FilterSelectionType, type FilterSelectionTypeRecord} from "@/models/Filter";
 import {BContainer, useToast} from "bootstrap-vue-next";
 import TextInput from "@/components/form/TextInput.vue";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
-import type Criteria from "@/models/Criteria";
+import {type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
+import {Action} from "@/components/enums/Action";
 
 const {show} = useToast();
 
+const currentFilter = ref<Filter>()
 const filters = ref<Filter[]>([]);
-const loadInitialFilters = ref(true);
+const openCollapseId = ref<number>();
+
+const filterSaving = ref(false);
+const keepCriteriaValue = ref(false);
 const loadAdditionalFilters = ref(false);
-const loadSingleFilter = ref(false);
 const loadError = ref(false);
 const loadFilterError = ref(false);
+const loadingFilter = ref(false);
+const loadInitialFilters = ref(true);
+const resetFilterError = ref(false);
+const resettingFilter = ref(false);
+const showDisclaimer = ref(true);
+
 const pageSize = ref(5);
 const currentPage = ref(1);
 const totalRows = ref(0);
 const sortField = ref('id');
 const sortDesc = ref(false);
-const openCollapseId = ref(null as number);
-const currentFilter = ref(undefined as Filter)
-const filterSaving = ref(false);
-const showDisclaimer = ref(true);
 
-const selectionTypeOptions: Option[] = Object.keys(FilterSelectionType).map(key => {
-  return {
-    text: FilterSelectionType[key],
-    value: key,
-  }
-});
+const selectionTypeOptions: Option[] = Object.keys(FilterSelectionType).map((key: string) => ({
+  text: (FilterSelectionType as FilterSelectionTypeRecord)[key],
+  value: key,
+}));
 
 const pageSizeOptions: Option[] = [{text: '1', value: 1}, {text: '5', value: 5}, {text: '10', value: 10}];
 
 const getCriteriasCount = (item: Filter) => {
-  return item.criterias.length;
+  return item.criterias?.length || 0;
 };
 
 const toggleCollapse = async (item: Filter) => {
@@ -49,7 +53,7 @@ const toggleCollapse = async (item: Filter) => {
   }
 
   openCollapseId.value = item.id;
-  await loadFilter(item.id);
+  await getFilter(item.id, Action.LOAD);
 };
 
 const onDisclaimerClose = () => {
@@ -61,29 +65,37 @@ const onSortChanged = async (field: string, sortDescending: boolean) => {
   await loadFilters(field, sortDescending, currentPage.value, pageSize.value)
 };
 
-const onPaginationChanged = async (event, page) => {
+const onPaginationChanged = async (event: any, page: number) => {
   event.preventDefault();
   await loadFilters(sortField.value, sortDesc.value, page, pageSize.value)
 };
 
+const onFilterNameUpdated = (val: string) => currentFilter.value!.name = val;
+
+const onFilterSelectionUpdated = (val: string) => currentFilter.value!.selection = val as FilterSelectionType;
+
 const onCriteriaUpdated = (val: Criteria, index: number) => {
-  currentFilter.value.criterias[index] = {...val}
+  if (currentFilter.value?.criterias) {
+    currentFilter.value.criterias[index] = {...val}
+  }
 };
 
-//todo filter reset
+const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
+  if (currentFilter.value?.criterias) {
+    (currentFilter.value.criterias[index] as any)[field] = value;
+  }
+};
 
-const onFormSave = async (event) => {
+const onKeepCriteriaValueReset = () => keepCriteriaValue.value = false;
+
+const onFormSave = async (event: any) => {
   event.preventDefault();
   filterSaving.value = true;
 
-  console.log('values to save', currentFilter.value);
-  await filterService.putFilter(currentFilter.value)
-      .then(() => {
-        filterSaving.value = false;
-        console.log('should display toast')
+  await filterService.putFilter(currentFilter.value!)
+      .then((response) => {
         show('Filter saved successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-        // toggleCollapse(currentFilter.value);
-  //todo save and toast
+        filters.value = filters.value.map(f => f.id === response.data.id ? {...response.data} : f);
       })
       .catch((error) => {
         console.error('Error updating filter:', error);
@@ -93,47 +105,81 @@ const onFormSave = async (event) => {
       });
 };
 
-const onPageSizeChanged = async (size) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
-
-const loadFilters = async (field: string, sortDescending: boolean, page: number, size: number) => {
-  try {
-    if (loadInitialFilters.value === false) {
-      loadAdditionalFilters.value = true;
-    }
-
-    const response = await filterService.getFilters(field, sortDescending, page, size);
-    filters.value = response.data.content;
-    totalRows.value = response.data.totalElements;
-  } catch (error) {
-    console.error('Error loading filters:', error);
-    loadError.value = true;
-  } finally {
-    sortField.value = field;
-    sortDesc.value = sortDescending;
-    currentPage.value = page;
-    pageSize.value = size;
-
-    if (loadInitialFilters.value) {
-      loadInitialFilters.value = false;
-    } else {
-      loadAdditionalFilters.value = false;
-    }
-  }
+const onFormReset = async (event: any) => {
+  event.preventDefault();
+  //todo modal for confirmation?
+  await getFilter(currentFilter.value!.id, Action.RESET)
 };
 
-const loadFilter = async (id: number) => {
-  loadFilterError.value = false;
-  loadSingleFilter.value = true;
+const onPageSizeChanged = async (size: any) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
 
-  try {
-    const response = await filterService.getFilter(id);
-    currentFilter.value = response.data;
-  } catch (error) {
-    console.error('Error loading filter:', error);
-    loadFilterError.value = true;
-  } finally {
-    loadSingleFilter.value = false;
+const loadFilters = async (field: string, sortDescending: boolean, page: number, size: number) => {
+  if (loadInitialFilters.value === false) {
+    loadAdditionalFilters.value = true;
   }
+
+  await filterService.getFilters(field, sortDescending, page, size)
+      .then((response) => {
+        const loadedFilters = response.data.content;
+        loadedFilters.forEach((filter: Filter) => {
+          filter.criterias = filter.criterias?.sort((a, b) => a.id - b.id);
+        });
+        filters.value = loadedFilters;
+        totalRows.value = response.data.totalElements;
+      })
+      .catch((error) => {
+        console.error('Error loading filters:', error);
+        loadError.value = true;
+      })
+      .finally(() => {
+        sortField.value = field;
+        sortDesc.value = sortDescending;
+        currentPage.value = page;
+        pageSize.value = size;
+
+        if (loadInitialFilters.value) {
+          loadInitialFilters.value = false;
+        } else {
+          loadAdditionalFilters.value = false;
+        }
+      });
+}
+
+const getFilter = async (id: number, action: Action) => {
+    if (Action.LOAD === action) {
+      loadFilterError.value = false;
+      loadingFilter.value = true;
+    } else if (Action.RESET === action) {
+      resetFilterError.value = false;
+      resettingFilter.value = true;
+    }
+
+  await filterService.getFilter(id)
+      .then((response) => {
+        const loadedFilter = response.data;
+        loadedFilter.criterias?.sort((a, b) => a.id - b.id);
+        if (Action.RESET === action) {
+          show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          keepCriteriaValue.value = true;
+        }
+        filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
+        currentFilter.value = response.data;
+      })
+      .catch((error) => {
+        console.error(`Error with filter ${action.toLowerCase()}:`, error);
+        if (Action.LOAD === action) {
+          loadFilterError.value = true;
+        } else if (Action.RESET === action) {
+          resetFilterError.value = true;
+        }
+      })
+      .finally(() => {
+        if (Action.LOAD === action) {
+          loadingFilter.value = false;
+        } else if (Action.RESET === action) {
+          resettingFilter.value = false;
+        }
+      });
 };
 
 onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value));
@@ -145,7 +191,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
       <BCol class="text-center">
         <BAlert dismissible variant="secondary" @update:model-value="onDisclaimerClose" :model-value="showDisclaimer">
           This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
-          It should contain CRUD functionality at the end. However only getting filters from backend is currently functional.<br/>
+          It should contain CRUD functionality at the end. Currently getting filters, update and filter reset is currently functional.<br/>
           Queries to backend are delayed by 500ms to simulate real world scenario.
         </BAlert>
 
@@ -196,10 +242,10 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                 <BTd class="bg-light text-start">{{ filter.name }}</BTd>
                 <BTd class="bg-light">
                   <BBadge pill variant="secondary">
-                    {{ getCriteriasCount(filter) }}
+                    {{ getCriteriasCount(filter as Filter) }}
                   </BBadge>
                 </BTd>
-                <BTd class="bg-light">{{ FilterSelectionType[filter.selection] }}</BTd>
+                <BTd class="bg-light">{{ (FilterSelectionType as FilterSelectionTypeRecord)[filter.selection] }}</BTd>
                 <BTd class="text-end bg-light">
                   <IBxsEdit
                     class="me-2 hover-pointer"
@@ -219,15 +265,15 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                   <Loading
                       class="text-center my-3"
                       :message="'Loading filter ...'"
-                      :loading="loadSingleFilter"
+                      :loading="loadingFilter"
                   />
 
                   <BAlert class="text-center mx-3 mt-3" variant="danger" :model-value="loadFilterError">
                     Error loading filter. Please try again later.
                   </BAlert>
 
-                  <BCard class="border-0" :title="'Edit filter'" v-if="!loadSingleFilter && !loadFilterError">
-                    <BForm @submit="onFormSave">
+                  <BCard class="border-0" :title="'Edit filter'" v-if="!loadingFilter && !loadFilterError && currentFilter">
+                    <BForm @reset="onFormReset" @submit="onFormSave">
                       <BRow>
                         <BCol class="text-start mt-3">
                           <TextInput
@@ -237,7 +283,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                               :label="'Name'"
                               :placeholder="'Enter name'"
                               :value="currentFilter.name"
-                              @update-value="(val) => currentFilter.name = val"
+                              @update-value="onFilterNameUpdated"
                           />
                         </BCol>
                       </BRow>
@@ -245,10 +291,14 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                       <BRow>
                         <BCol class="text-start mt-0">
                           <CriteriaGroup
+                              v-if="currentFilter.criterias"
                               :criterias="currentFilter.criterias"
                               :id="`${currentFilter.id}`"
+                              :keep-criteria-value="keepCriteriaValue"
                               :label="'Criteria'"
+                              @reset-keep-criteria-value="onKeepCriteriaValueReset"
                               @update-criteria="onCriteriaUpdated"
+                              @update-field="onCriteriaFieldUpdated"
                           />
                         </BCol>
                       </BRow>
@@ -256,31 +306,43 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                       <BRow>
                         <BCol class="text-start mt-3">
                           <RadioGroup
+                              v-if="currentFilter.selection"
                               :id="`${currentFilter.id}`"
                               :options="selectionTypeOptions"
                               :label="'Selection'"
                               :value="currentFilter.selection"
-                              @update-value="(val) => currentFilter.selection = val"
+                              @update-value="onFilterSelectionUpdated"
                           />
                         </BCol>
                       </BRow>
 
                       <BRow class="mt-3">
                         <BCol class="text-end">
-                            <BButton
-                                class="me-2"
-                                variant="outline-secondary"
-                                @click="() => toggleCollapse(filter)"
-                            >
-                              Close
-                            </BButton>
-                            <BButton
-                                type="submit"
-                                :loading="filterSaving"
-                                :loading-text="'Saving ...'"
-                            >
-                              Save changes
-                            </BButton>
+                          <BButton
+                              class="me-2"
+                              type="reset"
+                              variant="outline-secondary"
+                              :loading="resettingFilter"
+                              :loading-text="'Resetting ...'"
+                          >
+                            Reset
+                          </BButton>
+
+                          <BButton
+                              class="me-2"
+                              variant="outline-secondary"
+                              @click="() => toggleCollapse(filter)"
+                          >
+                            Close
+                          </BButton>
+
+                          <BButton
+                              type="submit"
+                              :loading="filterSaving"
+                              :loading-text="'Saving ...'"
+                          >
+                            Save changes
+                          </BButton>
                         </BCol>
                       </BRow>
                     </BForm>

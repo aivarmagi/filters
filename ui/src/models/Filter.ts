@@ -1,10 +1,17 @@
-import type Criteria from "@/models/Criteria";
+import {type Criteria} from "@/models/Criteria";
 
-export default class Filter {
+export class Filter {
     id: number;
     name: string;
     selection: FilterSelectionType;
-    criterias: Criteria[];
+    criterias?: Criteria[];
+
+    constructor(id: number, name: string, selection: FilterSelectionType, criterias?: Criteria[]) {
+        this.id = id;
+        this.name = name;
+        this.selection = selection;
+        this.criterias = criterias;
+    }
 }
 
 export enum FilterSelectionType {
@@ -12,3 +19,5 @@ export enum FilterSelectionType {
     SELECTION_2 = 'B',
     SELECTION_3 = 'C',
 }
+
+export type FilterSelectionTypeRecord = Record<string, FilterSelectionType>;
