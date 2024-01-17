@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import {
   type Criteria,
-  CriteriaAmountType, CriteriaDateType, CriteriaTitleType, CriteriaName,
-  type CriteriaNameRecord, type CriteriaAmountTypeRecord, type CriteriaTitleTypeRecord, type CriteriaDateTypeRecord
+  CriteriaAmountType,
+  CriteriaDateType,
+  CriteriaTitleType,
+  CriteriaName,
+  type CriteriaNameRecord,
+  type CriteriaAmountTypeRecord,
+  type CriteriaTitleTypeRecord,
+  type CriteriaDateTypeRecord,
 } from "@/models/Criteria";
 import type {Option} from "@/models/Option";
 import CriteriaGroupItem from "@/components/form/CriteriaGroupItem.vue";
@@ -10,13 +16,11 @@ import CriteriaGroupItem from "@/components/form/CriteriaGroupItem.vue";
 defineProps<{
   id: string,
   criterias: Criteria[],
-  keepCriteriaValue?: boolean,
   label: string,
   labelCols?: number,
 }>()
 
 const emit = defineEmits<{
-  (e: 'resetKeepCriteriaValue'): void
   (e: 'updateCriteria', val: Criteria, index: number): void
   (e: 'updateField', field: string, value: string, index: number): void
 }>()
@@ -29,6 +33,14 @@ const titleOptions: Option[] = Object.keys(CriteriaTitleType).map(key =>
     ({text: (CriteriaTitleType as CriteriaTitleTypeRecord)[key], value: key}));
 const dateOptions: Option[] = Object.keys(CriteriaDateType).map(key =>
     ({text: (CriteriaDateType as CriteriaDateTypeRecord)[key], value: key}));
+
+const onCriteriaUpdated = (val: Criteria, index: number) => {
+  emit('updateCriteria', val, index)
+}
+
+const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
+  emit('updateField', field, value, index)
+}
 </script>
 
 <template>
@@ -45,12 +57,10 @@ const dateOptions: Option[] = Object.keys(CriteriaDateType).map(key =>
           :criteria="criteria"
           :date-options="dateOptions"
           :id="'criteria-group-item-' + index"
-          :keep-criteria-value="keepCriteriaValue"
           :name-options="nameOptions"
           :title-options="titleOptions"
-          @reset-keep-criteria-value="emit('resetKeepCriteriaValue')"
-          @update-criteria="(val) => emit('updateCriteria', {...val}, index)"
-          @update-field="(field, value) => emit('updateField', field, value, index)"
+          @update-criteria="(val) => onCriteriaUpdated(val, index)"
+          @update-field="(field, value) => onCriteriaFieldUpdated(field, value, index)"
       />
     </BRow>
   </BFormGroup>

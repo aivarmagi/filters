@@ -37,3 +37,9 @@ export enum CriteriaDateType {
 }
 
 export type CriteriaDateTypeRecord = Record<string, CriteriaDateType>;
+
+export enum CriteriaItemFieldType {
+    NAME = 'name',
+    OPERATOR = 'operator',
+    VALUE = 'value',
+}

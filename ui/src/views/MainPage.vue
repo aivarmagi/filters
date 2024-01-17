@@ -10,6 +10,7 @@ import type {Option} from "@/models/Option";
 import {type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
 import {Action} from "@/components/enums/Action";
+import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 
 const {show} = useToast();
 
@@ -18,7 +19,6 @@ const filters = ref<Filter[]>([]);
 const openCollapseId = ref<number>();
 
 const filterSaving = ref(false);
-const keepCriteriaValue = ref(false);
 const loadAdditionalFilters = ref(false);
 const loadError = ref(false);
 const loadFilterError = ref(false);
@@ -27,6 +27,7 @@ const loadInitialFilters = ref(true);
 const resetFilterError = ref(false);
 const resettingFilter = ref(false);
 const showDisclaimer = ref(true);
+const showFormResetDialog = ref(false);
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -81,12 +82,10 @@ const onCriteriaUpdated = (val: Criteria, index: number) => {
 };
 
 const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
-  if (currentFilter.value?.criterias) {
+  if (currentFilter.value?.criterias && currentFilter.value.criterias[index]) {
     (currentFilter.value.criterias[index] as any)[field] = value;
   }
 };
-
-const onKeepCriteriaValueReset = () => keepCriteriaValue.value = false;
 
 const onFormSave = async (event: any) => {
   event.preventDefault();
@@ -105,9 +104,20 @@ const onFormSave = async (event: any) => {
       });
 };
 
-const onFormReset = async (event: any) => {
+const onShowFormResetDialog = (event: any) => {
   event.preventDefault();
-  //todo modal for confirmation?
+  if (showFormResetDialog.value === false) {
+    showFormResetDialog.value = true;
+  }
+}
+
+const onCloseFormResetDialog = () => {
+  if (showFormResetDialog.value === true) {
+    showFormResetDialog.value = false;
+  }
+}
+
+const onFormReset = async () => {
   await getFilter(currentFilter.value!.id, Action.RESET)
 };
 
@@ -156,11 +166,11 @@ const getFilter = async (id: number, action: Action) => {
 
   await filterService.getFilter(id)
       .then((response) => {
-        const loadedFilter = response.data;
+        const loadedFilter: Filter = response.data;
         loadedFilter.criterias?.sort((a, b) => a.id - b.id);
+
         if (Action.RESET === action) {
           show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-          keepCriteriaValue.value = true;
         }
         filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
         currentFilter.value = response.data;
@@ -182,7 +192,9 @@ const getFilter = async (id: number, action: Action) => {
       });
 };
 
-onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value));
+onMounted(() => {
+  loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value)
+})
 </script>
 
 <template>
@@ -228,7 +240,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
               </BTh>
               <BTh class="col-1 text-nowrap">Criteria count</BTh>
               <BTh class="col-1">Selection</BTh>
-              <BTh class="col-1"></BTh>
+              <BTh class="col-1">Action</BTh>
             </BTr>
           </BThead>
 
@@ -273,7 +285,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                   </BAlert>
 
                   <BCard class="border-0" :title="'Edit filter'" v-if="!loadingFilter && !loadFilterError && currentFilter">
-                    <BForm @reset="onFormReset" @submit="onFormSave">
+                    <BForm @reset="onShowFormResetDialog" @submit="onFormSave">
                       <BRow>
                         <BCol class="text-start mt-3">
                           <TextInput
@@ -294,9 +306,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                               v-if="currentFilter.criterias"
                               :criterias="currentFilter.criterias"
                               :id="`${currentFilter.id}`"
-                              :keep-criteria-value="keepCriteriaValue"
                               :label="'Criteria'"
-                              @reset-keep-criteria-value="onKeepCriteriaValueReset"
                               @update-criteria="onCriteriaUpdated"
                               @update-field="onCriteriaFieldUpdated"
                           />
@@ -382,6 +392,16 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
         </BRow>
       </BCol>
     </BRow>
+
+    <SimpleDialog
+        :button-cancel-text="'Close'"
+        :button-ok-text="'Yes'"
+        :id="'disclaimer-dialog'"
+        :message="'Are you sure you want to reset the form?'"
+        :show="showFormResetDialog"
+        @cancel="onCloseFormResetDialog"
+        @confirm="onFormReset"
+    />
   </BContainer>
 </template>
 
