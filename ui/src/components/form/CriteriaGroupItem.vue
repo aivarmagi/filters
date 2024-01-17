@@ -1,22 +1,19 @@
 <script setup lang="ts">
 import type {Option} from "@/models/Option";
-import {type Criteria, CriteriaName} from "@/models/Criteria";
+import {type Criteria, CriteriaItemFieldType, CriteriaName} from "@/models/Criteria";
 import {onMounted, ref, watch} from "vue";
 import TextInput from "@/components/form/TextInput.vue";
-import {isEqual} from 'lodash';
 
 const props = defineProps<{
   amountOptions: Option[],
   criteria: Criteria,
   dateOptions: Option[],
   id: string,
-  keepCriteriaValue?: boolean,
   nameOptions: Option[],
   titleOptions: Option[],
 }>()
 
 const emit = defineEmits<{
-  (e: 'resetKeepCriteriaValue'): void
   (e: 'updateCriteria', val: Criteria): void
   (e: 'updateField', field: string, value: string): void
 }>()
@@ -36,41 +33,31 @@ const getOperatorOptions = (criteriaName: string): Option[] => {
   }
 }
 
-watch(() => props.criteria, (newCriteria) => {
-  if (newCriteria.name !== name.value) {
-    name.value = newCriteria.name;
-  } else if (newCriteria.operator !== operator.value) {
-    operator.value = newCriteria.operator;
-  } else if (newCriteria.value !== criteriaValue.value) {
-    criteriaValue.value = newCriteria.value;
-  }
+const updateCriteriaValues = (nameValue: string, optionsValue: Option[], operatorValue: string, value: string) => {
+  name.value = nameValue
+  operatorOptions.value = optionsValue
+  operator.value = operatorValue
+  criteriaValue.value = value
+}
+
+const onCriteriaNameChanged = (val: string) => {
+  const changedOptions = getOperatorOptions(val);
+  const newCriteria = {...props.criteria, name: val, operator: changedOptions[0].value, value: ''}
+  emit('updateCriteria', newCriteria as Criteria)
+}
+
+const onCriteriaFieldChanged = (field: string, val: string) => {
+  emit('updateField', field, val)
+}
+
+watch(() => props.criteria, (changedCriteria) => {
+  const newOptions = getOperatorOptions(changedCriteria.name)
+  updateCriteriaValues(changedCriteria.name, newOptions, changedCriteria.operator, `${changedCriteria.value}`)
 }, { deep: true });
 
-watch(() => name.value, (newVal) => {
-    if (newVal && !isEqual(operatorOptions.value, getOperatorOptions(newVal))) {
-      operatorOptions.value = getOperatorOptions(newVal);
-      operator.value = operatorOptions.value[0].value as string;
-
-      const newCriteriaValue = props.keepCriteriaValue ? props.criteria.value : '';
-      criteriaValue.value = newCriteriaValue;
-      emit('resetKeepCriteriaValue')
-
-      const newCriteria = {...props.criteria, name: newVal, operator: operatorOptions.value[0].value, value: newCriteriaValue}
-      emit('updateCriteria', newCriteria as Criteria)
-    }
-})
-
-watch(() => operator.value, (newVal) => {
-  if (operatorOptions.value?.every((opt: Option) => opt.value !== newVal)) {
-    operator.value = operatorOptions.value[0].value as string;
-  }
-})
-
 onMounted(() => {
-  name.value = props.criteria.name
-  operatorOptions.value = getOperatorOptions(name.value)
-  operator.value = props.criteria.operator
-  criteriaValue.value = props.criteria.value
+  updateCriteriaValues(props.criteria.name, getOperatorOptions(props.criteria.name),
+      props.criteria.operator, props.criteria.value)
 })
 </script>
 
@@ -80,6 +67,7 @@ onMounted(() => {
         v-model="name"
         :id="'criteria-name-' + id"
         :options="nameOptions"
+        @change="(val) => onCriteriaNameChanged(val as string)"
     />
   </BCol>
 
@@ -88,7 +76,7 @@ onMounted(() => {
         v-model="operator"
         :id="'criteria-operator-' + id"
         :options="operatorOptions"
-        @change="(val) => emit('updateField', 'operator', val as string)"
+        @change="(val) => onCriteriaFieldChanged(CriteriaItemFieldType.OPERATOR, val as string)"
     />
   </BCol>
 
@@ -100,7 +88,7 @@ onMounted(() => {
             :id="'criteria-value-' + id"
             :placeholder="'Enter value'"
             :value="criteriaValue"
-            @update-value="(val) => emit('updateField', 'value', val)"
+            @update-value="(val) => onCriteriaFieldChanged(CriteriaItemFieldType.VALUE, val)"
         />
       </BCol>
 
@@ -112,6 +100,7 @@ onMounted(() => {
         />
       </BCol>
     </BRow>
+<!--    keepValues: {{props.keepCriteriaValue}}-->
   </BCol>
 </template>
 

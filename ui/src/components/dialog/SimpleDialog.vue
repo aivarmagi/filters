@@ -25,7 +25,7 @@ const onCancelled = () => {
 }
 
 const onConfirmed = () => {
-  emit('onConfirm')
+  emit('confirm')
 }
 
 watch(() => props.show, (newVal) => {

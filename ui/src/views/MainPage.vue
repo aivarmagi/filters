@@ -19,7 +19,6 @@ const filters = ref<Filter[]>([]);
 const openCollapseId = ref<number>();
 
 const filterSaving = ref(false);
-const keepCriteriaValue = ref(false);
 const loadAdditionalFilters = ref(false);
 const loadError = ref(false);
 const loadFilterError = ref(false);
@@ -83,12 +82,10 @@ const onCriteriaUpdated = (val: Criteria, index: number) => {
 };
 
 const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
-  if (currentFilter.value?.criterias) {
+  if (currentFilter.value?.criterias && currentFilter.value.criterias[index]) {
     (currentFilter.value.criterias[index] as any)[field] = value;
   }
 };
-
-const onKeepCriteriaValueReset = () => keepCriteriaValue.value = false;
 
 const onFormSave = async (event: any) => {
   event.preventDefault();
@@ -169,11 +166,11 @@ const getFilter = async (id: number, action: Action) => {
 
   await filterService.getFilter(id)
       .then((response) => {
-        const loadedFilter = response.data;
+        const loadedFilter: Filter = response.data;
         loadedFilter.criterias?.sort((a, b) => a.id - b.id);
+
         if (Action.RESET === action) {
           show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-          keepCriteriaValue.value = true;
         }
         filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
         currentFilter.value = response.data;
@@ -195,7 +192,9 @@ const getFilter = async (id: number, action: Action) => {
       });
 };
 
-onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value));
+onMounted(() => {
+  loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value)
+})
 </script>
 
 <template>
@@ -241,7 +240,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
               </BTh>
               <BTh class="col-1 text-nowrap">Criteria count</BTh>
               <BTh class="col-1">Selection</BTh>
-              <BTh class="col-1"></BTh>
+              <BTh class="col-1">Action</BTh>
             </BTr>
           </BThead>
 
@@ -307,9 +306,7 @@ onMounted(() => loadFilters(sortField.value, sortDesc.value, currentPage.value, 
                               v-if="currentFilter.criterias"
                               :criterias="currentFilter.criterias"
                               :id="`${currentFilter.id}`"
-                              :keep-criteria-value="keepCriteriaValue"
                               :label="'Criteria'"
-                              @reset-keep-criteria-value="onKeepCriteriaValueReset"
                               @update-criteria="onCriteriaUpdated"
                               @update-field="onCriteriaFieldUpdated"
                           />
