@@ -3,7 +3,7 @@ import {onMounted, ref} from "vue";
 import filterService from "@/services/filterService";
 import {Filter, FilterSelectionType, type FilterSelectionTypeRecord} from "@/models/Filter";
 import {BContainer, useToast} from "bootstrap-vue-next";
-import TextInput from "@/components/form/TextInput.vue";
+import Input from "@/components/form/Input.vue";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
@@ -288,7 +288,7 @@ onMounted(() => {
                     <BForm @reset="onShowFormResetDialog" @submit="onFormSave">
                       <BRow>
                         <BCol class="text-start mt-3">
-                          <TextInput
+                          <Input
                               class-name="'pb-0'"
                               required
                               :id="`${currentFilter.id}`"

@@ -2,7 +2,7 @@
 import type {Option} from "@/models/Option";
 import {type Criteria, CriteriaItemFieldType, CriteriaName} from "@/models/Criteria";
 import {onMounted, ref, watch} from "vue";
-import TextInput from "@/components/form/TextInput.vue";
+import Input from "@/components/form/Input.vue";
 import type {InputType} from "bootstrap-vue-next";
 
 const props = defineProps<{
@@ -104,7 +104,7 @@ onMounted(() => {
   <BCol class="col-12 col-md-4 mt-3">
     <BRow>
       <BCol>
-        <TextInput
+        <Input
             required
             :id="'criteria-value-' + id"
             :placeholder="valuePlaceholder"
