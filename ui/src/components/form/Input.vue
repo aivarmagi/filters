@@ -58,7 +58,6 @@ watch(() => props.value, (newVal) => {
             v-if="showDatepicker()"
             v-model="internalValue"
             :locale="locale"
-            :config="{ closeOnAutoApply: false }"
             :enable-time-picker="false"
             :id="`date-input-${id}`"
             :placeholder="placeholder"
