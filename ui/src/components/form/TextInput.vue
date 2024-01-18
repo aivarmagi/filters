@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {ref, watch} from "vue";
+import type {InputType} from "bootstrap-vue-next";
 
 const props = defineProps<{
   className?: string,
@@ -8,6 +9,7 @@ const props = defineProps<{
   labelCols?: number,
   placeholder: string,
   required: boolean,
+  type?: InputType,
   value: string,
 }>()
 
@@ -15,7 +17,17 @@ const emit = defineEmits<{
   (e: 'updateValue', val: string): void
 }>()
 
+const internalType = ref<InputType>()
 const internalValue = ref(props.value)
+const locale = ref('en-US') // et-EE
+
+const showDatepicker = () => internalType.value === 'date';
+
+const onDateChanged = (val: Date) => emit('updateValue', val.toLocaleDateString())
+
+watch(() => props.type, (newVal) => {
+  internalType.value = newVal;
+})
 
 watch(() => props.value, (newVal) => {
   internalValue.value = newVal;
@@ -31,13 +43,29 @@ watch(() => props.value, (newVal) => {
       :label-for="'text-input-' + id"
   >
     <BRow>
-      <BCol :class="{'col-md-6' : label, className}">
+      <BCol :class="{'col-md-6' : label, className}" >
         <BFormInput
+            v-if="!showDatepicker()"
             v-model.trim="internalValue"
-            :id="'text-input-' + id"
+            :id="`${internalType}-input-${id}`"
             :placeholder="placeholder"
+            :type="internalType"
             @input="() => emit('updateValue', internalValue)"
         />
+
+        <VueDatePicker
+            auto-apply
+            v-if="showDatepicker()"
+            v-model="internalValue"
+            :locale="locale"
+            :config="{ closeOnAutoApply: false }"
+            :enable-time-picker="false"
+            :id="`date-input-${id}`"
+            :placeholder="placeholder"
+            :format="'dd.MM.yyyy'"
+            @update:model-value="onDateChanged"
+        />
+
 <!--        todo: form validation-->
 <!--            :state="!required ? null : internalValue?.length > 0 ? null : false"-->
         <BFormInvalidFeedback>Value is required</BFormInvalidFeedback>

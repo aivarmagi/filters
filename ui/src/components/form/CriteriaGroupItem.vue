@@ -3,6 +3,7 @@ import type {Option} from "@/models/Option";
 import {type Criteria, CriteriaItemFieldType, CriteriaName} from "@/models/Criteria";
 import {onMounted, ref, watch} from "vue";
 import TextInput from "@/components/form/TextInput.vue";
+import type {InputType} from "bootstrap-vue-next";
 
 const props = defineProps<{
   amountOptions: Option[],
@@ -21,7 +22,9 @@ const emit = defineEmits<{
 const name = ref("")
 const operator = ref("")
 const operatorOptions= ref<Option[]>([])
-const criteriaValue = ref("")
+const currentValue = ref("")
+const valuePlaceholder = ref("")
+const valueType = ref<InputType>()
 
 const getOperatorOptions = (criteriaName: string): Option[] => {
   if (CriteriaName.TITLE === criteriaName) {
@@ -37,7 +40,9 @@ const updateCriteriaValues = (nameValue: string, optionsValue: Option[], operato
   name.value = nameValue
   operatorOptions.value = optionsValue
   operator.value = operatorValue
-  criteriaValue.value = value
+  chooseInputType(nameValue)
+  chooseInputPlaceholder(nameValue)
+  currentValue.value = value
 }
 
 const onCriteriaNameChanged = (val: string) => {
@@ -48,6 +53,22 @@ const onCriteriaNameChanged = (val: string) => {
 
 const onCriteriaFieldChanged = (field: string, val: string) => {
   emit('updateField', field, val)
+}
+
+const chooseInputType = (type: string) => {
+  valueType.value = CriteriaName.DATE === type
+      ? 'date'
+      : CriteriaName.AMOUNT === type
+          ? 'number'
+          : 'text'
+}
+
+const chooseInputPlaceholder = (type: string) => {
+  valuePlaceholder.value = CriteriaName.DATE === type
+      ? 'Enter date'
+      : CriteriaName.AMOUNT === type
+          ? 'Enter number'
+          : 'Enter value'
 }
 
 watch(() => props.criteria, (changedCriteria) => {
@@ -86,8 +107,9 @@ onMounted(() => {
         <TextInput
             required
             :id="'criteria-value-' + id"
-            :placeholder="'Enter value'"
-            :value="criteriaValue"
+            :placeholder="valuePlaceholder"
+            :type="valueType"
+            :value="currentValue"
             @update-value="(val) => onCriteriaFieldChanged(CriteriaItemFieldType.VALUE, val)"
         />
       </BCol>
@@ -100,7 +122,6 @@ onMounted(() => {
         />
       </BCol>
     </BRow>
-<!--    keepValues: {{props.keepCriteriaValue}}-->
   </BCol>
 </template>
 
