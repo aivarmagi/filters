@@ -4,10 +4,12 @@ import {type Criteria, CriteriaItemFieldType, CriteriaName} from "@/models/Crite
 import {onMounted, ref, watch} from "vue";
 import Input from "@/components/form/Input.vue";
 import type {InputType} from "bootstrap-vue-next";
+import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 
 const props = defineProps<{
   amountOptions: Option[],
   criteria: Criteria,
+  criteriaCount: number,
   dateOptions: Option[],
   id: string,
   nameOptions: Option[],
@@ -15,6 +17,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  (e: 'removeCriteria', val: number): void
   (e: 'updateCriteria', val: Criteria): void
   (e: 'updateField', field: string, value: string): void
 }>()
@@ -23,6 +26,7 @@ const name = ref("")
 const operator = ref("")
 const operatorOptions= ref<Option[]>([])
 const currentValue = ref("")
+const showRemoveCriteriaDialog = ref(false)
 const valuePlaceholder = ref("")
 const valueType = ref<InputType>()
 
@@ -53,6 +57,19 @@ const onCriteriaNameChanged = (val: string) => {
 
 const onCriteriaFieldChanged = (field: string, val: string) => {
   emit('updateField', field, val)
+}
+
+const onShowRemoveCriteriaDialog = () => {
+  showRemoveCriteriaDialog.value = true
+}
+
+const onCloseRemoveCriteriaDialog = () => {
+  showRemoveCriteriaDialog.value = false
+}
+
+const onCriteriaRemove = () => {
+  showRemoveCriteriaDialog.value = false
+  emit('removeCriteria', props.criteria.id)
 }
 
 const chooseInputType = (type: string) => {
@@ -114,17 +131,29 @@ onMounted(() => {
         />
       </BCol>
 
-      <BCol class="col-auto px-0 me-3 mt-1">
+      <BCol class="col-auto px-0 me-3 mt-1 button-container">
         <ITypcnDelete
-            disabled
             class="hover-pointer"
-            @click="() => console.log('TODO: Delete criteria ' + id)"
+            v-if="criteriaCount > 1"
+            @click="onShowRemoveCriteriaDialog"
         />
       </BCol>
     </BRow>
+
+    <SimpleDialog
+        :button-cancel-text="'Close'"
+        :button-ok-text="'Yes'"
+        :id="`disclaimer-remove-criteria-${id}`"
+        :message="'Are you sure you want to remove criteria?'"
+        :show="showRemoveCriteriaDialog"
+        @cancel="onCloseRemoveCriteriaDialog"
+        @confirm="onCriteriaRemove"
+    />
   </BCol>
 </template>
 
 <style scoped>
-
+.button-container {
+  min-width: 20px;
+}
 </style>

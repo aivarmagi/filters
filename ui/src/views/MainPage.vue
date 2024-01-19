@@ -87,6 +87,12 @@ const onCriteriaFieldUpdated = (field: string, value: string, index: number) => 
   }
 };
 
+const onCriteriaRemoved = (index: number) => {
+  if (currentFilter.value?.criterias) {
+    currentFilter.value.criterias.splice(index, 1);
+  }
+};
+
 const onFormSave = async (event: any) => {
   event.preventDefault();
   filterSaving.value = true;
@@ -307,6 +313,7 @@ onMounted(() => {
                               :criterias="currentFilter.criterias"
                               :id="`${currentFilter.id}`"
                               :label="'Criteria'"
+                              @remove-criteria="onCriteriaRemoved"
                               @update-criteria="onCriteriaUpdated"
                               @update-field="onCriteriaFieldUpdated"
                           />

@@ -1,6 +1,5 @@
 package ee.aivar.filters.model.db;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 import ee.aivar.filters.enums.Selection;
