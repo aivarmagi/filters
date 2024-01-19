@@ -1,5 +1,5 @@
 export interface Criteria {
-    id: number;
+    id?: number;
     name: CriteriaName;
     operator: string;
     value: string;
@@ -9,6 +9,14 @@ export enum CriteriaName {
     AMOUNT = 'AMOUNT',
     DATE = 'DATE',
     TITLE = 'TITLE',
+}
+
+export function createCriteria(): Criteria {
+    return {
+        name: CriteriaName.AMOUNT,
+        operator: CriteriaAmountType.EQUAL,
+        value: '',
+    };
 }
 
 export type CriteriaNameRecord = Record<string, CriteriaName>;

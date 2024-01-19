@@ -7,7 +7,7 @@ import Input from "@/components/form/Input.vue";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
-import {type Criteria} from "@/models/Criteria";
+import {createCriteria, type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
 import {Action} from "@/enums/Action";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
@@ -93,6 +93,12 @@ const onCriteriaRemoved = (index: number) => {
   }
 };
 
+const onCriteriaAdded = () => {
+  if (currentFilter.value?.criterias) {
+    currentFilter.value.criterias.push(createCriteria());
+  }
+};
+
 const onFormSave = async (event: any) => {
   event.preventDefault();
   filterSaving.value = true;
@@ -138,7 +144,7 @@ const loadFilters = async (field: string, sortDescending: boolean, page: number,
       .then((response) => {
         const loadedFilters = response.data.content;
         loadedFilters.forEach((filter: Filter) => {
-          filter.criterias = filter.criterias?.sort((a, b) => a.id - b.id);
+          filter.criterias = filter.criterias?.sort((a, b) => a.id! - b.id!);
         });
         filters.value = loadedFilters;
         totalRows.value = response.data.totalElements;
@@ -173,7 +179,7 @@ const getFilter = async (id: number, action: Action) => {
   await filterService.getFilter(id)
       .then((response) => {
         const loadedFilter: Filter = response.data;
-        loadedFilter.criterias?.sort((a, b) => a.id - b.id);
+        loadedFilter.criterias?.sort((a, b) => a.id! - b.id!);
 
         if (Action.RESET === action) {
           show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
@@ -318,6 +324,17 @@ onMounted(() => {
                               @update-criteria="onCriteriaUpdated"
                               @update-field="onCriteriaFieldUpdated"
                           />
+                        </BCol>
+                      </BRow>
+
+                      <BRow>
+                        <BCol class="text-end mt-3">
+                          <BButton
+                              variant="outline-secondary"
+                              @click="onCriteriaAdded"
+                          >
+                            Add criteria
+                          </BButton>
                         </BCol>
                       </BRow>
 
