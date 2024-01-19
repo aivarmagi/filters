@@ -21,6 +21,7 @@ defineProps<{
 }>()
 
 const emit = defineEmits<{
+  (e: 'removeCriteria', val: number): void
   (e: 'updateCriteria', val: Criteria, index: number): void
   (e: 'updateField', field: string, value: string, index: number): void
 }>()
@@ -41,6 +42,10 @@ const onCriteriaUpdated = (val: Criteria, index: number) => {
 const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
   emit('updateField', field, value, index)
 }
+
+const onCriteriaRemoved = (index: number) => {
+  emit('removeCriteria', index)
+}
 </script>
 
 <template>
@@ -55,10 +60,12 @@ const onCriteriaFieldUpdated = (field: string, value: string, index: number) => 
       <CriteriaGroupItem
           :amount-options="amountOptions"
           :criteria="criteria"
+          :criteria-count="criterias.length"
           :date-options="dateOptions"
           :id="'criteria-group-item-' + index"
           :name-options="nameOptions"
           :title-options="titleOptions"
+          @remove-criteria="() => onCriteriaRemoved(index)"
           @update-criteria="(val) => onCriteriaUpdated(val, index)"
           @update-field="(field, value) => onCriteriaFieldUpdated(field, value, index)"
       />

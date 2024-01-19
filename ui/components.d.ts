@@ -40,7 +40,6 @@ declare module 'vue' {
     Loading: typeof import('./src/components/Loading.vue')['default']
     RadioGroup: typeof import('./src/components/form/RadioGroup.vue')['default']
     SimpleDialog: typeof import('./src/components/dialog/SimpleDialog.vue')['default']
-    TextInput: typeof import('./src/components/form/TextInput.vue')['default']
     TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
     WelcomeItem: typeof import('./src/components/WelcomeItem.vue')['default']
   }

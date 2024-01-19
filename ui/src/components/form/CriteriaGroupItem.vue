@@ -2,11 +2,14 @@
 import type {Option} from "@/models/Option";
 import {type Criteria, CriteriaItemFieldType, CriteriaName} from "@/models/Criteria";
 import {onMounted, ref, watch} from "vue";
-import TextInput from "@/components/form/TextInput.vue";
+import Input from "@/components/form/Input.vue";
+import type {InputType} from "bootstrap-vue-next";
+import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 
 const props = defineProps<{
   amountOptions: Option[],
   criteria: Criteria,
+  criteriaCount: number,
   dateOptions: Option[],
   id: string,
   nameOptions: Option[],
@@ -14,6 +17,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
+  (e: 'removeCriteria', val: number): void
   (e: 'updateCriteria', val: Criteria): void
   (e: 'updateField', field: string, value: string): void
 }>()
@@ -21,7 +25,10 @@ const emit = defineEmits<{
 const name = ref("")
 const operator = ref("")
 const operatorOptions= ref<Option[]>([])
-const criteriaValue = ref("")
+const currentValue = ref("")
+const showRemoveCriteriaDialog = ref(false)
+const valuePlaceholder = ref("")
+const valueType = ref<InputType>()
 
 const getOperatorOptions = (criteriaName: string): Option[] => {
   if (CriteriaName.TITLE === criteriaName) {
@@ -37,7 +44,9 @@ const updateCriteriaValues = (nameValue: string, optionsValue: Option[], operato
   name.value = nameValue
   operatorOptions.value = optionsValue
   operator.value = operatorValue
-  criteriaValue.value = value
+  chooseInputType(nameValue)
+  chooseInputPlaceholder(nameValue)
+  currentValue.value = value
 }
 
 const onCriteriaNameChanged = (val: string) => {
@@ -48,6 +57,35 @@ const onCriteriaNameChanged = (val: string) => {
 
 const onCriteriaFieldChanged = (field: string, val: string) => {
   emit('updateField', field, val)
+}
+
+const onShowRemoveCriteriaDialog = () => {
+  showRemoveCriteriaDialog.value = true
+}
+
+const onCloseRemoveCriteriaDialog = () => {
+  showRemoveCriteriaDialog.value = false
+}
+
+const onCriteriaRemove = () => {
+  showRemoveCriteriaDialog.value = false
+  emit('removeCriteria', props.criteria.id)
+}
+
+const chooseInputType = (type: string) => {
+  valueType.value = CriteriaName.DATE === type
+      ? 'date'
+      : CriteriaName.AMOUNT === type
+          ? 'number'
+          : 'text'
+}
+
+const chooseInputPlaceholder = (type: string) => {
+  valuePlaceholder.value = CriteriaName.DATE === type
+      ? 'Enter date'
+      : CriteriaName.AMOUNT === type
+          ? 'Enter number'
+          : 'Enter value'
 }
 
 watch(() => props.criteria, (changedCriteria) => {
@@ -83,27 +121,39 @@ onMounted(() => {
   <BCol class="col-12 col-md-4 mt-3">
     <BRow>
       <BCol>
-        <TextInput
+        <Input
             required
             :id="'criteria-value-' + id"
-            :placeholder="'Enter value'"
-            :value="criteriaValue"
+            :placeholder="valuePlaceholder"
+            :type="valueType"
+            :value="currentValue"
             @update-value="(val) => onCriteriaFieldChanged(CriteriaItemFieldType.VALUE, val)"
         />
       </BCol>
 
-      <BCol class="col-auto px-0 me-3 mt-1">
+      <BCol class="col-auto px-0 me-3 mt-1 button-container">
         <ITypcnDelete
-            disabled
             class="hover-pointer"
-            @click="() => console.log('TODO: Delete criteria ' + id)"
+            v-if="criteriaCount > 1"
+            @click="onShowRemoveCriteriaDialog"
         />
       </BCol>
     </BRow>
-<!--    keepValues: {{props.keepCriteriaValue}}-->
+
+    <SimpleDialog
+        :button-cancel-text="'Close'"
+        :button-ok-text="'Yes'"
+        :id="`disclaimer-remove-criteria-${id}`"
+        :message="'Are you sure you want to remove criteria?'"
+        :show="showRemoveCriteriaDialog"
+        @cancel="onCloseRemoveCriteriaDialog"
+        @confirm="onCriteriaRemove"
+    />
   </BCol>
 </template>
 
 <style scoped>
-
+.button-container {
+  min-width: 20px;
+}
 </style>

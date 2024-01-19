@@ -3,7 +3,7 @@ import {onMounted, ref} from "vue";
 import filterService from "@/services/filterService";
 import {Filter, FilterSelectionType, type FilterSelectionTypeRecord} from "@/models/Filter";
 import {BContainer, useToast} from "bootstrap-vue-next";
-import TextInput from "@/components/form/TextInput.vue";
+import Input from "@/components/form/Input.vue";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
@@ -84,6 +84,12 @@ const onCriteriaUpdated = (val: Criteria, index: number) => {
 const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
   if (currentFilter.value?.criterias && currentFilter.value.criterias[index]) {
     (currentFilter.value.criterias[index] as any)[field] = value;
+  }
+};
+
+const onCriteriaRemoved = (index: number) => {
+  if (currentFilter.value?.criterias) {
+    currentFilter.value.criterias.splice(index, 1);
   }
 };
 
@@ -289,7 +295,7 @@ onMounted(() => {
                     <BForm @reset="onShowFormResetDialog" @submit="onFormSave">
                       <BRow>
                         <BCol class="text-start mt-3">
-                          <TextInput
+                          <Input
                               class-name="'pb-0'"
                               required
                               :id="`${currentFilter.id}`"
@@ -308,6 +314,7 @@ onMounted(() => {
                               :criterias="currentFilter.criterias"
                               :id="`${currentFilter.id}`"
                               :label="'Criteria'"
+                              @remove-criteria="onCriteriaRemoved"
                               @update-criteria="onCriteriaUpdated"
                               @update-field="onCriteriaFieldUpdated"
                           />
