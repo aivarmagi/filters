@@ -9,7 +9,7 @@ import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
 import {type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
-import {Action} from "@/components/enums/Action";
+import {Action} from "@/enums/Action";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 
 const {show} = useToast();
@@ -203,7 +203,8 @@ onMounted(() => {
       <BCol class="text-center">
         <BAlert dismissible variant="secondary" @update:model-value="onDisclaimerClose" :model-value="showDisclaimer">
           This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
-          It should contain CRUD functionality at the end. Currently getting filters, update and filter reset is currently functional.<br/>
+          It should contain full CRUD functionality at the end.<br/>
+          Currently getting filters, update, filter reset and criteria removal features are functional.<br/>
           Queries to backend are delayed by 500ms to simulate real world scenario.
         </BAlert>
 

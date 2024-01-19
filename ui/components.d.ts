@@ -35,6 +35,7 @@ declare module 'vue' {
     IBxsEdit: typeof import('~icons/bxs/edit')['default']
     IIconoirSortDown: typeof import('~icons/iconoir/sort-down')['default']
     IIconoirSortUp: typeof import('~icons/iconoir/sort-up')['default']
+    Input: typeof import('./src/components/form/Input.vue')['default']
     ITypcnDelete: typeof import('~icons/typcn/delete')['default']
     Loading: typeof import('./src/components/Loading.vue')['default']
     RadioGroup: typeof import('./src/components/form/RadioGroup.vue')['default']
