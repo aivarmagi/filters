@@ -2,6 +2,7 @@ package ee.aivar.filters.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import ee.aivar.filters.exception.ResourceNotFoundException;
 import ee.aivar.filters.mapper.CriteriaMapper;
 import ee.aivar.filters.mapper.FilterMapper;
 import ee.aivar.filters.model.api.FilterDTO;
+import ee.aivar.filters.model.db.Criteria;
 import ee.aivar.filters.repository.CriteriaRepository;
 import ee.aivar.filters.repository.FilterRepository;
 
@@ -67,18 +69,20 @@ public class FilterService {
         filter.setName(filterDTO.getName());
         filter.setSelection(filterDTO.getSelection());
 
-        filter.getCriterias().forEach(criteria -> criteria.setDeletedAt(LocalDateTime.now()));
-
         var criterias = filterDTO.getCriterias().stream()
                 .map(criteriaMapper::toCriteria)
                 .collect(Collectors.toSet());
         criterias.forEach(criteria -> {
-            criteria.setId(null);
             criteria.setFilter(filter);
         });
 
-        var criteriasToSave = filter.getCriterias();
-        criteriasToSave.addAll(criterias);
+        var currentCriterias = filter.getCriterias();
+        currentCriterias.forEach(cc -> {
+            if (criterias.stream().noneMatch(c -> c.getId() != null && c.getId().equals(cc.getId()))) {
+                cc.setDeletedAt(LocalDateTime.now());
+            }
+        });
+
         filter.setCriterias(criterias);
 
         var updatedFilter = filterRepository.save(filter);
