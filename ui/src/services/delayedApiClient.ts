@@ -20,3 +20,13 @@ export function delayedPut<T>(url: string, data: T, delay: number, config?: Axio
         }, delay);
     });
 }
+
+export function delayedDelete<T>(url: string, delay: number, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            apiClient.delete<T>(url, config)
+                .then(resolve)
+                .catch((error) => reject(error.code));
+        }, delay);
+    });
+}

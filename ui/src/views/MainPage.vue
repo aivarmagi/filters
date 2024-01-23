@@ -15,6 +15,7 @@ import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 const {show} = useToast();
 
 const currentFilter = ref<Filter>()
+const removableFilterId = ref<number>();
 const filters = ref<Filter[]>([]);
 const openCollapseId = ref<number>();
 
@@ -24,10 +25,12 @@ const loadError = ref(false);
 const loadFilterError = ref(false);
 const loadingFilter = ref(false);
 const loadInitialFilters = ref(true);
+const removingFilter = ref(false);
 const resetFilterError = ref(false);
 const resettingFilter = ref(false);
 const showDisclaimer = ref(true);
 const showFormResetDialog = ref(false);
+const showRemoveFilterDialog = ref(false);
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -44,6 +47,10 @@ const pageSizeOptions: Option[] = [{text: '1', value: 1}, {text: '5', value: 5},
 
 const getCriteriasCount = (item: Filter) => {
   return item.criterias?.length || 0;
+};
+
+const showFilterRemoveSpinner = (id?: number) => {
+  return removingFilter.value === true && removableFilterId.value !== undefined && removableFilterId.value === id;
 };
 
 const toggleCollapse = async (item: Filter) => {
@@ -123,15 +130,40 @@ const onShowFormResetDialog = (event: any) => {
   }
 }
 
-const onCloseFormResetDialog = () => {
-  if (showFormResetDialog.value === true) {
+const onCloseDialog = (action: Action) => {
+  if (action === Action.RESET && showFormResetDialog.value === true) {
     showFormResetDialog.value = false;
+  } else if (action === Action.DELETE && showRemoveFilterDialog.value === true) {
+    showRemoveFilterDialog.value = false;
   }
+}
+
+const onShowRemoveFilterDialog = (id: number) => {
+  removableFilterId.value = id;
+  showRemoveFilterDialog.value = true;
 }
 
 const onFormReset = async () => {
   await getFilter(currentFilter.value!.id, Action.RESET)
 };
+
+const onFilterRemoved = async () => {
+  if (removableFilterId.value) {
+    removingFilter.value = true;
+    await filterService.deleteFilter(removableFilterId.value)
+        .then(() => {
+          show('Filter removed successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
+          removableFilterId.value = undefined;
+        })
+        .catch((error) => {
+          console.error('Error removing filter:', error);
+        })
+        .finally(() => {
+          removingFilter.value = false;
+        });
+  }
+}
 
 const onPageSizeChanged = async (size: any) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
 
@@ -271,17 +303,22 @@ onMounted(() => {
                   </BBadge>
                 </BTd>
                 <BTd class="bg-light">{{ (FilterSelectionType as FilterSelectionTypeRecord)[filter.selection] }}</BTd>
-                <BTd class="text-end bg-light">
-                  <IBxsEdit
-                    class="me-2 hover-pointer"
-                    role="button"
-                    @click="() => toggleCollapse(filter)"
-                  />
+                <BTd class="bg-light">
+                  <div class="action-icon-container">
+                    <IBxsEdit
+                      class="mx-2 hover-pointer"
+                      role="button"
+                      @click="() => toggleCollapse(filter)"
+                    />
 
-                  <ITypcnDelete
-                    class="hover-pointer me-2"
-                    @click="() => console.log('TODO Delete ' + filter.id)"
-                  />
+                    <ITypcnDelete
+                      class="hover-pointer"
+                      v-if="filters.length > 1 && !showFilterRemoveSpinner(filter.id)"
+                      @click="() => onShowRemoveFilterDialog(filter.id)"
+                    />
+
+                    <Loading :loading="showFilterRemoveSpinner(filter.id)" />
+                  </div>
                 </BTd>
               </BTr>
 
@@ -424,8 +461,18 @@ onMounted(() => {
         :id="'disclaimer-dialog'"
         :message="'Are you sure you want to reset the form?'"
         :show="showFormResetDialog"
-        @cancel="onCloseFormResetDialog"
+        @cancel="() => onCloseDialog(Action.RESET)"
         @confirm="onFormReset"
+    />
+
+    <SimpleDialog
+        :button-cancel-text="'Close'"
+        :button-ok-text="'Yes'"
+        :id="'disclaimer-dialog'"
+        :message="'Are you sure you want to remove filter?'"
+        :show="showRemoveFilterDialog"
+        @cancel="() => onCloseDialog(Action.DELETE)"
+        @confirm="onFilterRemoved"
     />
   </BContainer>
 </template>
@@ -433,5 +480,10 @@ onMounted(() => {
 <style scoped>
 .hover-pointer {
   cursor: pointer;
+}
+
+.action-icon-container {
+  display: flex;
+  align-items: center;
 }
 </style>

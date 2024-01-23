@@ -1,6 +1,6 @@
 import type {Filter} from "@/models/Filter";
 import type {AxiosResponse} from "axios";
-import {delayedGet, delayedPut} from "@/services/delayedApiClient";
+import {delayedDelete, delayedGet, delayedPut} from "@/services/delayedApiClient";
 
 const API_URL = 'http://localhost:8080/api/v1';
 const QUERY_DELAY = 500;
@@ -31,6 +31,14 @@ export default {
     async putFilter(filter: Filter): Promise<AxiosResponse<Filter>> {
         try {
             return await delayedPut<Filter>(`${API_URL}/filters/${filter.id}`, filter, QUERY_DELAY);
+        } catch (error) {
+            throw error;
+        }
+    },
+
+    async deleteFilter(id: number): Promise<AxiosResponse<void>> {
+        try {
+            return await delayedDelete<void>(`${API_URL}/filters/${id}`, QUERY_DELAY);
         } catch (error) {
             throw error;
         }
