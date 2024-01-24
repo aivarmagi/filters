@@ -1,7 +1,7 @@
 import {type Criteria} from "@/models/Criteria";
 
 export class Filter {
-    id: number;
+    id?: number | FilterState;
     name: string;
     selection: FilterSelectionType;
     criterias?: Criteria[];
@@ -21,3 +21,7 @@ export enum FilterSelectionType {
 }
 
 export type FilterSelectionTypeRecord = Record<string, FilterSelectionType>;
+
+export enum FilterState {
+    NEW = 'NEW'
+}

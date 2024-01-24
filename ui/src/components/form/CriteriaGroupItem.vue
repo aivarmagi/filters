@@ -17,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  (e: 'removeCriteria', val: number): void
+  (e: 'removeCriteria'): void
   (e: 'updateCriteria', val: Criteria): void
   (e: 'updateField', field: string, value: string): void
 }>()
@@ -69,7 +69,7 @@ const onCloseRemoveCriteriaDialog = () => {
 
 const onCriteriaRemove = () => {
   showRemoveCriteriaDialog.value = false
-  emit('removeCriteria', props.criteria.id)
+  emit('removeCriteria')
 }
 
 const chooseInputType = (type: string) => {
@@ -100,7 +100,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <BCol class="col-12 col-md-4 mt-3">
+  <BCol class="col-12 col-md-4">
     <BFormSelect
         v-model="name"
         :id="'criteria-name-' + id"
@@ -109,7 +109,7 @@ onMounted(() => {
     />
   </BCol>
 
-  <BCol class="col-12 col-md-4 mt-3">
+  <BCol class="col-12 col-md-4">
     <BFormSelect
         v-model="operator"
         :id="'criteria-operator-' + id"
@@ -118,7 +118,7 @@ onMounted(() => {
     />
   </BCol>
 
-  <BCol class="col-12 col-md-4 mt-3">
+  <BCol class="col-12 col-md-4">
     <BRow>
       <BCol>
         <Input

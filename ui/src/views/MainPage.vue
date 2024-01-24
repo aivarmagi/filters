@@ -1,22 +1,21 @@
 <script setup lang="ts">
 import {onMounted, ref} from "vue";
 import filterService from "@/services/filterService";
-import {Filter, FilterSelectionType, type FilterSelectionTypeRecord} from "@/models/Filter";
+import {Filter, FilterSelectionType, type FilterSelectionTypeRecord, FilterState} from "@/models/Filter";
 import {BContainer, useToast} from "bootstrap-vue-next";
-import Input from "@/components/form/Input.vue";
-import RadioGroup from "@/components/form/RadioGroup.vue";
-import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
-import {type Criteria} from "@/models/Criteria";
+import {createCriteria, type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
-import {Action} from "@/components/enums/Action";
+import {Action} from "@/enums/Action";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
+import FilterDetailsForm from "@/components/form/FilterDetailsForm.vue";
 
 const {show} = useToast();
 
 const currentFilter = ref<Filter>()
+const removableFilterId = ref<number | FilterState>();
 const filters = ref<Filter[]>([]);
-const openCollapseId = ref<number>();
+const openCollapseId = ref<number | FilterState>();
 
 const filterSaving = ref(false);
 const loadAdditionalFilters = ref(false);
@@ -24,10 +23,13 @@ const loadError = ref(false);
 const loadFilterError = ref(false);
 const loadingFilter = ref(false);
 const loadInitialFilters = ref(true);
+const removingFilter = ref(false);
 const resetFilterError = ref(false);
 const resettingFilter = ref(false);
+const showAddFilterModal = ref(false);
 const showDisclaimer = ref(true);
 const showFormResetDialog = ref(false);
+const showRemoveFilterDialog = ref(false);
 
 const pageSize = ref(5);
 const currentPage = ref(1);
@@ -46,6 +48,10 @@ const getCriteriasCount = (item: Filter) => {
   return item.criterias?.length || 0;
 };
 
+const showFilterRemoveSpinner = (id?: number | FilterState) => {
+  return removingFilter.value === true && removableFilterId.value !== undefined && removableFilterId.value === id;
+};
+
 const toggleCollapse = async (item: Filter) => {
   if (openCollapseId.value === item.id) {
     openCollapseId.value = undefined;
@@ -54,7 +60,7 @@ const toggleCollapse = async (item: Filter) => {
   }
 
   openCollapseId.value = item.id;
-  await getFilter(item.id, Action.LOAD);
+  await getFilter(item.id as number, Action.LOAD);
 };
 
 const onDisclaimerClose = () => {
@@ -93,11 +99,62 @@ const onCriteriaRemoved = (index: number) => {
   }
 };
 
-const onFormSave = async (event: any) => {
+const onCriteriaAdded = () => {
+  if (currentFilter.value?.criterias) {
+    currentFilter.value.criterias.push(createCriteria());
+  }
+};
+
+const onShowAddFilterModal = () => {
+  const addedFilter: Filter = {
+    id: FilterState.NEW,
+    name: '',
+    selection: Object.keys(FilterSelectionType)[0] as FilterSelectionType,
+    criterias: [createCriteria()],
+  };
+
+  openCollapseId.value = undefined;
+  currentFilter.value = {...addedFilter};
+  showAddFilterModal.value = true;
+};
+
+const onHideAddFilterModal = () => {
+  currentFilter.value = undefined;
+  showAddFilterModal.value = false;
+}
+
+const onFilterSave = async (event: any) => {
   event.preventDefault();
   filterSaving.value = true;
 
-  await filterService.putFilter(currentFilter.value!)
+  const filterToSave = {...currentFilter.value!};
+  const isNewFilter = filterToSave.id === FilterState.NEW;
+
+  if (isNewFilter) {
+    delete filterToSave.id;
+    await addFilter(filterToSave);
+  } else {
+    await updateFilter(filterToSave);
+  }
+};
+
+const addFilter = async (filter: Filter) => {
+  await filterService.postFilter(filter)
+      .then((response) => {
+          show('Filter added successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          filters.value.push(response.data);
+          onHideAddFilterModal();
+      })
+      .catch((error) => {
+          console.error('Error adding filter:', error);
+      })
+      .finally(() => {
+        filterSaving.value = false;
+      });
+}
+
+const updateFilter = async (filter: Filter) => {
+  await filterService.putFilter(filter)
       .then((response) => {
         show('Filter saved successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
         filters.value = filters.value.map(f => f.id === response.data.id ? {...response.data} : f);
@@ -108,7 +165,7 @@ const onFormSave = async (event: any) => {
       .finally(() => {
         filterSaving.value = false;
       });
-};
+}
 
 const onShowFormResetDialog = (event: any) => {
   event.preventDefault();
@@ -117,15 +174,40 @@ const onShowFormResetDialog = (event: any) => {
   }
 }
 
-const onCloseFormResetDialog = () => {
-  if (showFormResetDialog.value === true) {
+const onCloseDialog = (action: Action) => {
+  if (action === Action.RESET && showFormResetDialog.value === true) {
     showFormResetDialog.value = false;
+  } else if (action === Action.DELETE && showRemoveFilterDialog.value === true) {
+    showRemoveFilterDialog.value = false;
   }
 }
 
+const onShowRemoveFilterDialog = (id: number | FilterState) => {
+  removableFilterId.value = id;
+  showRemoveFilterDialog.value = true;
+}
+
 const onFormReset = async () => {
-  await getFilter(currentFilter.value!.id, Action.RESET)
+  await getFilter(currentFilter.value!.id as number, Action.RESET)
 };
+
+const onFilterRemoved = async () => {
+  if (removableFilterId.value) {
+    removingFilter.value = true;
+    await filterService.deleteFilter(removableFilterId.value as number)
+        .then(() => {
+          show('Filter removed successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
+          removableFilterId.value = undefined;
+        })
+        .catch((error) => {
+          console.error('Error removing filter:', error);
+        })
+        .finally(() => {
+          removingFilter.value = false;
+        });
+  }
+}
 
 const onPageSizeChanged = async (size: any) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
 
@@ -138,7 +220,7 @@ const loadFilters = async (field: string, sortDescending: boolean, page: number,
       .then((response) => {
         const loadedFilters = response.data.content;
         loadedFilters.forEach((filter: Filter) => {
-          filter.criterias = filter.criterias?.sort((a, b) => a.id - b.id);
+          filter.criterias = filter.criterias?.sort((a, b) => a.id! - b.id!);
         });
         filters.value = loadedFilters;
         totalRows.value = response.data.totalElements;
@@ -173,7 +255,7 @@ const getFilter = async (id: number, action: Action) => {
   await filterService.getFilter(id)
       .then((response) => {
         const loadedFilter: Filter = response.data;
-        loadedFilter.criterias?.sort((a, b) => a.id - b.id);
+        loadedFilter.criterias?.sort((a, b) => a.id! - b.id!);
 
         if (Action.RESET === action) {
           show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
@@ -209,7 +291,6 @@ onMounted(() => {
       <BCol class="text-center">
         <BAlert dismissible variant="secondary" @update:model-value="onDisclaimerClose" :model-value="showDisclaimer">
           This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
-          It should contain CRUD functionality at the end. Currently getting filters, update and filter reset is currently functional.<br/>
           Queries to backend are delayed by 500ms to simulate real world scenario.
         </BAlert>
 
@@ -255,7 +336,7 @@ onMounted(() => {
                 v-for="filter in filters"
                 :key="filter.id"
             >
-              <BTr class="align-middle">
+              <BTr class="align-middle" v-if="FilterState.NEW !== filter.id">
                 <BTd class="bg-light">{{ filter.id }}</BTd>
                 <BTd class="bg-light text-start">{{ filter.name }}</BTd>
                 <BTd class="bg-light">
@@ -264,17 +345,22 @@ onMounted(() => {
                   </BBadge>
                 </BTd>
                 <BTd class="bg-light">{{ (FilterSelectionType as FilterSelectionTypeRecord)[filter.selection] }}</BTd>
-                <BTd class="text-end bg-light">
-                  <IBxsEdit
-                    class="me-2 hover-pointer"
-                    role="button"
-                    @click="() => toggleCollapse(filter)"
-                  />
+                <BTd class="bg-light">
+                  <div class="action-icon-container">
+                    <IBxsEdit
+                      class="mx-2 hover-pointer"
+                      role="button"
+                      @click="() => toggleCollapse(filter)"
+                    />
 
-                  <ITypcnDelete
-                    class="hover-pointer me-2"
-                    @click="() => console.log('TODO Delete ' + filter.id)"
-                  />
+                    <ITypcnDelete
+                      class="hover-pointer"
+                      v-if="filters.length > 1 && !showFilterRemoveSpinner(filter.id)"
+                      @click="() => onShowRemoveFilterDialog(filter.id!)"
+                    />
+
+                    <Loading :loading="showFilterRemoveSpinner(filter.id)" />
+                  </div>
                 </BTd>
               </BTr>
 
@@ -291,78 +377,21 @@ onMounted(() => {
                   </BAlert>
 
                   <BCard class="border-0" :title="'Edit filter'" v-if="!loadingFilter && !loadFilterError && currentFilter">
-                    <BForm @reset="onShowFormResetDialog" @submit="onFormSave">
-                      <BRow>
-                        <BCol class="text-start mt-3">
-                          <Input
-                              class-name="'pb-0'"
-                              required
-                              :id="`${currentFilter.id}`"
-                              :label="'Name'"
-                              :placeholder="'Enter name'"
-                              :value="currentFilter.name"
-                              @update-value="onFilterNameUpdated"
-                          />
-                        </BCol>
-                      </BRow>
-
-                      <BRow>
-                        <BCol class="text-start mt-0">
-                          <CriteriaGroup
-                              v-if="currentFilter.criterias"
-                              :criterias="currentFilter.criterias"
-                              :id="`${currentFilter.id}`"
-                              :label="'Criteria'"
-                              @remove-criteria="onCriteriaRemoved"
-                              @update-criteria="onCriteriaUpdated"
-                              @update-field="onCriteriaFieldUpdated"
-                          />
-                        </BCol>
-                      </BRow>
-
-                      <BRow>
-                        <BCol class="text-start mt-3">
-                          <RadioGroup
-                              v-if="currentFilter.selection"
-                              :id="`${currentFilter.id}`"
-                              :options="selectionTypeOptions"
-                              :label="'Selection'"
-                              :value="currentFilter.selection"
-                              @update-value="onFilterSelectionUpdated"
-                          />
-                        </BCol>
-                      </BRow>
-
-                      <BRow class="mt-3">
-                        <BCol class="text-end">
-                          <BButton
-                              class="me-2"
-                              type="reset"
-                              variant="outline-secondary"
-                              :loading="resettingFilter"
-                              :loading-text="'Resetting ...'"
-                          >
-                            Reset
-                          </BButton>
-
-                          <BButton
-                              class="me-2"
-                              variant="outline-secondary"
-                              @click="() => toggleCollapse(filter)"
-                          >
-                            Close
-                          </BButton>
-
-                          <BButton
-                              type="submit"
-                              :loading="filterSaving"
-                              :loading-text="'Saving ...'"
-                          >
-                            Save changes
-                          </BButton>
-                        </BCol>
-                      </BRow>
-                    </BForm>
+                    <FilterDetailsForm
+                        :current-filter="currentFilter"
+                        :filter-saving="filterSaving"
+                        :resetting-filter="resettingFilter"
+                        :selection-type-options="selectionTypeOptions"
+                        @add-criteria="onCriteriaAdded"
+                        @close="() => toggleCollapse(filter)"
+                        @remove-criteria="onCriteriaRemoved"
+                        @reset="onShowFormResetDialog"
+                        @save-filter="onFilterSave"
+                        @update-criteria="onCriteriaUpdated"
+                        @update-field="onCriteriaFieldUpdated"
+                        @update-name="onFilterNameUpdated"
+                        @update-selection="onFilterSelectionUpdated"
+                      />
                   </BCard>
                 </BTd>
               </BTr>
@@ -373,7 +402,6 @@ onMounted(() => {
         <BRow v-if="filters?.length > 0">
           <BCol class="col-auto ms-3">
             <BFormSelect
-                size="sm"
                 v-model="pageSize"
                 :id="'page-size-select'"
                 :options="pageSizeOptions"
@@ -384,7 +412,6 @@ onMounted(() => {
           <BCol class="col-1">
             <BPagination
                 align="end"
-                size="sm"
                 v-model="currentPage"
                 :hide-goto-end-buttons="true"
                 :per-page="pageSize"
@@ -393,8 +420,17 @@ onMounted(() => {
             />
           </BCol>
 
-          <BCol class="col-auto mt-1">
+          <BCol class="col-auto mt-2">
             <Loading :loading="loadAdditionalFilters"/>
+          </BCol>
+
+          <BCol class="text-end">
+            <BButton
+                class="me-3"
+                @click="onShowAddFilterModal"
+            >
+              Add filter
+            </BButton>
           </BCol>
         </BRow>
       </BCol>
@@ -406,14 +442,57 @@ onMounted(() => {
         :id="'disclaimer-dialog'"
         :message="'Are you sure you want to reset the form?'"
         :show="showFormResetDialog"
-        @cancel="onCloseFormResetDialog"
+        @cancel="() => onCloseDialog(Action.RESET)"
         @confirm="onFormReset"
     />
+
+    <SimpleDialog
+        :button-cancel-text="'Close'"
+        :button-ok-text="'Yes'"
+        :id="'disclaimer-dialog'"
+        :message="'Are you sure you want to remove filter?'"
+        :show="showRemoveFilterDialog"
+        @cancel="() => onCloseDialog(Action.DELETE)"
+        @confirm="onFilterRemoved"
+    />
+
+    <BModal
+      cancel-variant="outline-secondary"
+      hide-footer
+      ok-variant="secondary"
+      scrollable
+      size="lg"
+      :cancel-title="'Close'"
+      :ok-title="'Confirm'"
+      :title="'Add new filter'"
+      v-if="currentFilter"
+      v-model="showAddFilterModal"
+      @hidden="onHideAddFilterModal"
+    >
+      <FilterDetailsForm
+          :current-filter="currentFilter"
+          :filter-saving="filterSaving"
+          :selection-type-options="selectionTypeOptions"
+          @add-criteria="onCriteriaAdded"
+          @close="onHideAddFilterModal"
+          @remove-criteria="onCriteriaRemoved"
+          @save-filter="onFilterSave"
+          @update-criteria="onCriteriaUpdated"
+          @update-field="onCriteriaFieldUpdated"
+          @update-name="onFilterNameUpdated"
+          @update-selection="onFilterSelectionUpdated"
+      />
+    </BModal>
   </BContainer>
 </template>
 
 <style scoped>
 .hover-pointer {
   cursor: pointer;
+}
+
+.action-icon-container {
+  display: flex;
+  align-items: center;
 }
 </style>

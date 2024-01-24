@@ -31,6 +31,7 @@ declare module 'vue' {
     BTr: typeof import('bootstrap-vue-next')['BTr']
     CriteriaGroup: typeof import('./src/components/form/CriteriaGroup.vue')['default']
     CriteriaGroupItem: typeof import('./src/components/form/CriteriaGroupItem.vue')['default']
+    FilterDetailsForm: typeof import('./src/components/form/FilterDetailsForm.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     IBxsEdit: typeof import('~icons/bxs/edit')['default']
     IIconoirSortDown: typeof import('~icons/iconoir/sort-down')['default']
