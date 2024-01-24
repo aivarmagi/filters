@@ -2,7 +2,7 @@ package ee.aivar.filters.service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -15,7 +15,6 @@ import ee.aivar.filters.exception.ResourceNotFoundException;
 import ee.aivar.filters.mapper.CriteriaMapper;
 import ee.aivar.filters.mapper.FilterMapper;
 import ee.aivar.filters.model.api.FilterDTO;
-import ee.aivar.filters.model.db.Criteria;
 import ee.aivar.filters.repository.CriteriaRepository;
 import ee.aivar.filters.repository.FilterRepository;
 
@@ -55,9 +54,21 @@ public class FilterService {
         return filterMapper.toFilterDTO(filter);
     }
 
+    @Transactional
     public FilterDTO createFilter(FilterDTO filterDTO) {
-        var filter = filterMapper.toFilter(filterDTO);
+        var filter = filterMapper.toFilterWithoutCriteria(filterDTO);
         var savedFilter = filterRepository.save(filter);
+
+        if (filterDTO.getCriterias() != null) {
+            var criterias = filterDTO.getCriterias().stream()
+                    .map(criteriaMapper::toCriteria)
+                    .collect(Collectors.toSet());
+
+            criterias.forEach(criteria -> criteria.setFilter(savedFilter));
+
+            var savedCriterias = criteriaRepository.saveAll(criterias);
+            savedFilter.setCriterias(new HashSet<>(savedCriterias));
+        }
 
         return filterMapper.toFilterDTO(savedFilter);
     }

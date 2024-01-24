@@ -12,6 +12,7 @@ public interface CriteriaMapper {
     CriteriaMapper INSTANCE = Mappers.getMapper(CriteriaMapper.class);
 
     @Mapping(target = "filter", ignore = true)
+    @Mapping(target = "id", expression = "java(from.getId() == null ? null : from.getId())")
     Criteria toCriteria(CriteriaDTO from);
 
     CriteriaDTO toCriteriaDTO(Criteria from);
