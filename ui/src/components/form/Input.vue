@@ -53,6 +53,7 @@ watch(() => props.value, (newVal) => {
             @input="() => emit('updateValue', internalValue)"
         />
 
+<!--        todo change picker position with modal-->
         <VueDatePicker
             auto-apply
             v-if="showDatepicker()"
