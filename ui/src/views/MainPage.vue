@@ -118,7 +118,10 @@ const onShowAddFilterModal = () => {
   showAddFilterModal.value = true;
 };
 
-const onHideAddFilterModal = () => currentFilter.value = undefined;
+const onHideAddFilterModal = () => {
+  currentFilter.value = undefined;
+  showAddFilterModal.value = false;
+}
 
 const onFilterSave = async (event: any) => {
   event.preventDefault();
@@ -140,6 +143,7 @@ const addFilter = async (filter: Filter) => {
       .then((response) => {
           show('Filter added successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
           filters.value.push(response.data);
+          onHideAddFilterModal();
       })
       .catch((error) => {
           console.error('Error adding filter:', error);
@@ -287,8 +291,6 @@ onMounted(() => {
       <BCol class="text-center">
         <BAlert dismissible variant="secondary" @update:model-value="onDisclaimerClose" :model-value="showDisclaimer">
           This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
-          It should contain full CRUD functionality at the end.<br/>
-          Currently getting filters, update, filter reset and criteria removal features are functional.<br/>
           Queries to backend are delayed by 500ms to simulate real world scenario.
         </BAlert>
 
