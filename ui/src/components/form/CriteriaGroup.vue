@@ -50,13 +50,14 @@ const onCriteriaRemoved = (index: number) => {
 
 <template>
   <BFormGroup
-      label-class="text-nowrap mt-3"
+      class="criteria-container scrollbar"
+      label-class="text-nowrap mt-2"
       :id="'criteria-group-' + id"
       :label="label"
       :label-cols="labelCols || 2"
       :label-for="'criteria-input-' + id"
   >
-    <BRow class="mt-3" v-for="(criteria, index) in criterias">
+    <BRow v-for="(criteria, index) in criterias">
       <CriteriaGroupItem
           :amount-options="amountOptions"
           :criteria="criteria"
@@ -74,5 +75,8 @@ const onCriteriaRemoved = (index: number) => {
 </template>
 
 <style scoped>
-
+.criteria-container {
+  max-height: 162px;
+  overflow-y: auto;
+}
 </style>

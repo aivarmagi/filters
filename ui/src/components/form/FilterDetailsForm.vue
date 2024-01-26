@@ -31,7 +31,7 @@ const emit = defineEmits<{
       @submit="(event: any) => emit('saveFilter', event)"
   >
     <BRow>
-      <BCol class="text-start mt-3">
+      <BCol class="text-start mt-3 mb-2">
         <Input
             class-name="'pb-0'"
             required
@@ -45,7 +45,7 @@ const emit = defineEmits<{
     </BRow>
 
     <BRow>
-      <BCol class="text-start mt-0">
+      <BCol class="text-start">
         <CriteriaGroup
             v-if="currentFilter.criterias"
             :criterias="currentFilter.criterias"

@@ -1,0 +1,48 @@
+/* Scrollbar */
+html, .scrollbar {
+    &::-webkit-scrollbar {
+        background-color: var(--vt-c-white);
+        width: 16px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: var(--vt-c-white);
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: var(--vt-c-divider-light-1);
+        border-radius: 16px;
+        border: 4px solid var(--vt-c-white);
+    }
+
+    &::-webkit-scrollbar-button {
+        display:none;
+    }
+}
+
+/* Radio button */
+.form-check-input {
+    &:checked {
+        background-color: var(--vt-c-divider-dark-1) !important;
+        border-color: var(--vt-c-divider-dark-2) !important;
+    }
+    &:focus {
+        box-shadow: 0 0 0 0.25rem var(--vt-c-divider-light-1) !important;
+    }
+}
+
+/* Pagination */
+.pagination {
+    --bs-pagination-color: unset !important;
+    --bs-pagination-hover-color: unset !important;
+    --bs-pagination-focus-color: unset !important;
+    --bs-pagination-focus-box-shadow: 0 0 0 0.25rem var(--vt-c-divider-light-1) !important;
+    --bs-pagination-active-bg: var(--vt-c-divider-dark-1) !important;
+    --bs-pagination-active-border-color: var(--vt-c-divider-dark-2) !important;
+}
+
+/* Select */
+.form-select:focus {
+    border-color: var(--vt-c-divider-dark-2) !important;
+    box-shadow: 0 0 0 0.25rem var(--vt-c-divider-light-1) !important;
+}

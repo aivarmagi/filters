@@ -100,7 +100,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <BCol class="col-12 col-md-4">
+  <BCol class="col-12 col-md-4 my-2">
     <BFormSelect
         v-model="name"
         :id="'criteria-name-' + id"
@@ -109,7 +109,7 @@ onMounted(() => {
     />
   </BCol>
 
-  <BCol class="col-12 col-md-4">
+  <BCol class="col-12 col-md-4 my-2">
     <BFormSelect
         v-model="operator"
         :id="'criteria-operator-' + id"
@@ -118,7 +118,7 @@ onMounted(() => {
     />
   </BCol>
 
-  <BCol class="col-12 col-md-4">
+  <BCol class="col-12 col-md-4 my-2">
     <BRow>
       <BCol>
         <Input
@@ -134,6 +134,7 @@ onMounted(() => {
       <BCol class="col-auto px-0 me-3 mt-1 button-container">
         <ITypcnDelete
             class="hover-pointer"
+            v-b-tooltip="'Remove criteria'"
             v-if="criteriaCount > 1"
             @click="onShowRemoveCriteriaDialog"
         />

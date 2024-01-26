@@ -143,6 +143,7 @@ const addFilter = async (filter: Filter) => {
       .then((response) => {
           show('Filter added successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
           filters.value.push(response.data);
+          totalRows.value = filters.value.length;
           onHideAddFilterModal();
       })
       .catch((error) => {
@@ -199,6 +200,7 @@ const onFilterRemoved = async () => {
           show('Filter removed successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
           filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
           removableFilterId.value = undefined;
+          totalRows.value = filters.value.length;
         })
         .catch((error) => {
           console.error('Error removing filter:', error);
@@ -307,7 +309,7 @@ onMounted(() => {
             class="filters-table"
             hover
             responsive
-            v-if="filters.length > 0"
+            v-if="totalRows > 0"
         >
           <BThead>
             <BTr>
@@ -350,12 +352,14 @@ onMounted(() => {
                     <IBxsEdit
                       class="mx-2 hover-pointer"
                       role="button"
+                      v-b-tooltip="'Edit filter'"
                       @click="() => toggleCollapse(filter)"
                     />
 
                     <ITypcnDelete
                       class="hover-pointer"
-                      v-if="filters.length > 1 && !showFilterRemoveSpinner(filter.id)"
+                      v-b-tooltip="'Remove filter'"
+                      v-if="totalRows > 1 && !showFilterRemoveSpinner(filter.id)"
                       @click="() => onShowRemoveFilterDialog(filter.id!)"
                     />
 
@@ -400,8 +404,9 @@ onMounted(() => {
         </BTableSimple>
 
         <BRow v-if="filters?.length > 0">
-          <BCol class="col-auto ms-3">
+          <BCol class="col-auto ms-2">
             <BFormSelect
+                size="sm"
                 v-model="pageSize"
                 :id="'page-size-select'"
                 :options="pageSizeOptions"
@@ -409,9 +414,10 @@ onMounted(() => {
             />
           </BCol>
 
-          <BCol class="col-1">
+          <BCol class="col-auto">
             <BPagination
                 align="end"
+                size="sm"
                 v-model="currentPage"
                 :hide-goto-end-buttons="true"
                 :per-page="pageSize"
@@ -420,8 +426,12 @@ onMounted(() => {
             />
           </BCol>
 
-          <BCol class="col-auto mt-2">
+          <BCol class="col-auto mt-2" v-if="loadAdditionalFilters">
             <Loading :loading="loadAdditionalFilters"/>
+          </BCol>
+
+          <BCol class="col-auto mt-1">
+            Total count: {{ totalRows }}
           </BCol>
 
           <BCol class="text-end">
@@ -493,6 +503,6 @@ onMounted(() => {
 
 .action-icon-container {
   display: flex;
-  align-items: center;
+  align-items: end;
 }
 </style>

@@ -40,8 +40,10 @@ watch(() => props.show, (newVal) => {
       lazy
       v-model="showDialog"
       :cancel-title="props.buttonCancelText || 'Cancel'"
+      :cancel-variant="'outline-secondary'"
       :id="props.id"
       :ok-title="props.buttonOkText || 'OK'"
+      :ok-variant="'secondary'"
       @cancel="onCancelPressed"
       @hidden="onCancelled"
       @ok="onConfirmed"
