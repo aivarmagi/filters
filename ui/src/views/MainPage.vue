@@ -13,16 +13,17 @@ import LocalStorageManager from "@/services/LocalStorageManager";
 
 const {show} = useToast();
 
+const FILTER = 'filter';
 const HIDE_DISCLAIMER = 'hideDisclaimer';
 const PAGE_SIZE = 'pageSize';
 const PAGE = 'page';
 const SORT_FIELD = 'sortField';
 const SORT_DESC = 'sortDesc';
 
-const currentFilter = ref<Filter>()
+const currentFilter = ref<Filter | undefined>(LocalStorageManager.get<Filter>(FILTER) || undefined);
 const removableFilterId = ref<number | FilterState>();
 const filters = ref<Filter[]>([]);
-const openCollapseId = ref<number | FilterState>();
+const openCollapseId = ref<number | FilterState | undefined>(currentFilter.value?.id || undefined);
 
 const filterSaving = ref(false);
 const hideDisclaimer = ref(LocalStorageManager.get<boolean>(HIDE_DISCLAIMER) || false);
@@ -63,6 +64,7 @@ const toggleCollapse = async (item: Filter) => {
   if (openCollapseId.value === item.id) {
     openCollapseId.value = undefined;
     currentFilter.value = undefined;
+    updateOrRemoveFilterStorage();
     return;
   }
 
@@ -76,43 +78,53 @@ const onDisclaimerClose = () => {
 };
 
 const onSortChanged = async (field: string, sortDescending: boolean) => {
-  LocalStorageManager.save(SORT_FIELD, field)
-  LocalStorageManager.save(SORT_DESC, sortDescending)
+  updateSortField(field);
+  updateSortDesc(sortDescending);
   await loadFilters(field, sortDescending, currentPage.value, pageSize.value)
 };
 
 const onPaginationChanged = async (event: any, page: number) => {
   event.preventDefault();
 
-  LocalStorageManager.save(PAGE, page)
+  updateOrRemoveFilterStorage();
   await loadFilters(sortField.value, sortDesc.value, page, pageSize.value)
 };
 
-const onFilterNameUpdated = (val: string) => currentFilter.value!.name = val;
+const onFilterNameUpdated = (val: string) => {
+  currentFilter.value!.name = val;
+  updateOrRemoveFilterStorage(currentFilter.value);
+}
 
-const onFilterSelectionUpdated = (val: string) => currentFilter.value!.selection = val as FilterSelectionType;
+const onFilterSelectionUpdated = (val: string) => {
+  currentFilter.value!.selection = val as FilterSelectionType;
+  updateOrRemoveFilterStorage(currentFilter.value);
+}
 
 const onCriteriaUpdated = (val: Criteria, index: number) => {
   if (currentFilter.value?.criterias) {
     currentFilter.value.criterias[index] = {...val}
+    updateOrRemoveFilterStorage(currentFilter.value);
   }
 };
 
 const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
   if (currentFilter.value?.criterias && currentFilter.value.criterias[index]) {
     (currentFilter.value.criterias[index] as any)[field] = value;
+    updateOrRemoveFilterStorage(currentFilter.value);
   }
 };
 
 const onCriteriaRemoved = (index: number) => {
   if (currentFilter.value?.criterias) {
     currentFilter.value.criterias.splice(index, 1);
+    updateOrRemoveFilterStorage(currentFilter.value);
   }
 };
 
 const onCriteriaAdded = () => {
   if (currentFilter.value?.criterias) {
     currentFilter.value.criterias.push(createCriteria());
+    updateOrRemoveFilterStorage(currentFilter.value);
   }
 };
 
@@ -126,12 +138,14 @@ const onShowAddFilterModal = () => {
 
   openCollapseId.value = undefined;
   currentFilter.value = {...addedFilter};
+  updateOrRemoveFilterStorage({...addedFilter});
   showAddFilterModal.value = true;
 };
 
 const onHideAddFilterModal = () => {
   currentFilter.value = undefined;
   showAddFilterModal.value = false;
+  updateOrRemoveFilterStorage();
 }
 
 const onFilterSave = async (event: any) => {
@@ -179,6 +193,37 @@ const updateFilter = async (filter: Filter) => {
       });
 }
 
+const updateOrRemoveFilterStorage = (filter?: Filter) => {
+  if (filter) {
+    LocalStorageManager.save(FILTER, filter);
+  } else {
+    console.log('Removing filter from storage')
+    LocalStorageManager.remove(FILTER);
+    currentFilter.value = undefined;
+    openCollapseId.value = undefined;
+  }
+}
+
+const updateSortField = (field: string) => {
+  sortField.value = field;
+  LocalStorageManager.save(SORT_FIELD, field);
+}
+
+const updateSortDesc = (sortDescending: boolean) => {
+  sortDesc.value = sortDescending;
+  LocalStorageManager.save(SORT_DESC, sortDescending);
+}
+
+const updateCurrentPage = (page: number) => {
+  currentPage.value = page;
+  LocalStorageManager.save(PAGE, page);
+}
+
+const updatePageSizeStorage = (size: number) => {
+  LocalStorageManager.save(PAGE_SIZE, size);
+  pageSize.value = size;
+}
+
 const onShowFormResetDialog = (event: any) => {
   event.preventDefault();
   if (showFormResetDialog.value === false) {
@@ -223,7 +268,7 @@ const onFilterRemoved = async () => {
 }
 
 const onPageSizeChanged = async (size: any) => {
-  LocalStorageManager.save(PAGE_SIZE, size)
+  updatePageSizeStorage(size);
   await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
 }
 
@@ -246,10 +291,14 @@ const loadFilters = async (field: string, sortDescending: boolean, page: number,
         loadError.value = true;
       })
       .finally(() => {
-        sortField.value = field;
-        sortDesc.value = sortDescending;
-        currentPage.value = page;
-        pageSize.value = size;
+        updateSortField(field);
+        updateSortDesc(sortDescending);
+        updateCurrentPage(page);
+        updatePageSizeStorage(size);
+
+        if (!currentFilter.value) {
+          updateOrRemoveFilterStorage()
+        }
 
         if (loadInitialFilters.value) {
           loadInitialFilters.value = false;
@@ -278,6 +327,7 @@ const getFilter = async (id: number, action: Action) => {
         }
         filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
         currentFilter.value = response.data;
+        updateOrRemoveFilterStorage(response.data);
       })
       .catch((error) => {
         console.error(`Error with filter ${action.toLowerCase()}:`, error);
@@ -445,12 +495,12 @@ onMounted(() => {
             />
           </BCol>
 
-          <BCol class="col-auto mt-2" v-if="loadAdditionalFilters">
-            <Loading :loading="loadAdditionalFilters"/>
-          </BCol>
-
           <BCol class="col-auto mt-1">
             Total count: {{ totalRows }}
+          </BCol>
+
+          <BCol class="col-auto mt-2" v-if="loadAdditionalFilters">
+            <Loading :loading="loadAdditionalFilters"/>
           </BCol>
 
           <BCol class="text-end">
