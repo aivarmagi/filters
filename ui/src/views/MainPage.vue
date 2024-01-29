@@ -9,8 +9,15 @@ import Loading from "@/components/Loading.vue";
 import {Action} from "@/enums/Action";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 import FilterDetailsForm from "@/components/form/FilterDetailsForm.vue";
+import LocalStorageManager from "@/services/LocalStorageManager";
 
 const {show} = useToast();
+
+const HIDE_DISCLAIMER = 'hideDisclaimer';
+const PAGE_SIZE = 'pageSize';
+const PAGE = 'page';
+const SORT_FIELD = 'sortField';
+const SORT_DESC = 'sortDesc';
 
 const currentFilter = ref<Filter>()
 const removableFilterId = ref<number | FilterState>();
@@ -18,6 +25,7 @@ const filters = ref<Filter[]>([]);
 const openCollapseId = ref<number | FilterState>();
 
 const filterSaving = ref(false);
+const hideDisclaimer = ref(LocalStorageManager.get<boolean>(HIDE_DISCLAIMER) || false);
 const loadAdditionalFilters = ref(false);
 const loadError = ref(false);
 const loadFilterError = ref(false);
@@ -27,15 +35,14 @@ const removingFilter = ref(false);
 const resetFilterError = ref(false);
 const resettingFilter = ref(false);
 const showAddFilterModal = ref(false);
-const showDisclaimer = ref(true);
 const showFormResetDialog = ref(false);
 const showRemoveFilterDialog = ref(false);
 
-const pageSize = ref(5);
-const currentPage = ref(1);
+const pageSize = ref(LocalStorageManager.get<number>(PAGE_SIZE) || 5);
+const currentPage = ref(LocalStorageManager.get<number>(PAGE) || 1);
 const totalRows = ref(0);
-const sortField = ref('id');
-const sortDesc = ref(false);
+const sortField = ref(LocalStorageManager.get<string>(SORT_FIELD) || 'id');
+const sortDesc = ref(LocalStorageManager.get<boolean>(SORT_DESC) || false);
 
 const selectionTypeOptions: Option[] = Object.keys(FilterSelectionType).map((key: string) => ({
   text: (FilterSelectionType as FilterSelectionTypeRecord)[key],
@@ -64,16 +71,20 @@ const toggleCollapse = async (item: Filter) => {
 };
 
 const onDisclaimerClose = () => {
-  showDisclaimer.value = false;
-  //todo save it to local storage?
+  hideDisclaimer.value = true;
+  LocalStorageManager.save(HIDE_DISCLAIMER, true);
 };
 
 const onSortChanged = async (field: string, sortDescending: boolean) => {
+  LocalStorageManager.save(SORT_FIELD, field)
+  LocalStorageManager.save(SORT_DESC, sortDescending)
   await loadFilters(field, sortDescending, currentPage.value, pageSize.value)
 };
 
 const onPaginationChanged = async (event: any, page: number) => {
   event.preventDefault();
+
+  LocalStorageManager.save(PAGE, page)
   await loadFilters(sortField.value, sortDesc.value, page, pageSize.value)
 };
 
@@ -211,7 +222,10 @@ const onFilterRemoved = async () => {
   }
 }
 
-const onPageSizeChanged = async (size: any) => await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
+const onPageSizeChanged = async (size: any) => {
+  LocalStorageManager.save(PAGE_SIZE, size)
+  await loadFilters(sortField.value, sortDesc.value, currentPage.value, size);
+}
 
 const loadFilters = async (field: string, sortDescending: boolean, page: number, size: number) => {
   if (loadInitialFilters.value === false) {
@@ -291,7 +305,12 @@ onMounted(() => {
   <BContainer fluid>
     <BRow class="mt-4">
       <BCol class="text-center">
-        <BAlert dismissible variant="secondary" @update:model-value="onDisclaimerClose" :model-value="showDisclaimer">
+        <BAlert
+            dismissible
+            variant="secondary"
+            :model-value="!hideDisclaimer"
+            @update:model-value="onDisclaimerClose"
+        >
           This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
           Queries to backend are delayed by 500ms to simulate real world scenario.
         </BAlert>
