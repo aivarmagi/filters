@@ -50,7 +50,6 @@ const onCriteriaRemoved = (index: number) => {
 
 <template>
   <BFormGroup
-      class="criteria-container scrollbar"
       label-class="text-nowrap mt-2"
       :id="'criteria-group-' + id"
       :label="label"
@@ -75,8 +74,4 @@ const onCriteriaRemoved = (index: number) => {
 </template>
 
 <style scoped>
-.criteria-container {
-  max-height: 162px;
-  overflow-y: auto;
-}
 </style>

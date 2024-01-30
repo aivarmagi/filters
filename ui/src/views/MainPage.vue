@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import {nextTick, onMounted, ref} from "vue";
 import filterService from "@/services/filterService";
 import {Filter, FilterSelectionType, type FilterSelectionTypeRecord, FilterState} from "@/models/Filter";
 import {BContainer, useToast} from "bootstrap-vue-next";
@@ -10,6 +10,13 @@ import {Action} from "@/enums/Action";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 import FilterDetailsForm from "@/components/form/FilterDetailsForm.vue";
 import LocalStorageManager from "@/services/LocalStorageManager";
+// import '@interactjs/auto-start'
+// import '@interactjs/actions/drag'
+// import '@interactjs/actions/resize'
+// import '@interactjs/modifiers'
+// import '@interactjs/dev-tools'
+import interact from 'interactjs'
+import {useResizableInteract} from "@/views/MainPageHelpers";
 
 const {show} = useToast();
 
@@ -197,7 +204,6 @@ const updateOrRemoveFilterStorage = (filter?: Filter) => {
   if (filter) {
     LocalStorageManager.save(FILTER, filter);
   } else {
-    console.log('Removing filter from storage')
     LocalStorageManager.remove(FILTER);
     currentFilter.value = undefined;
     openCollapseId.value = undefined;
@@ -348,6 +354,7 @@ const getFilter = async (id: number, action: Action) => {
 
 onMounted(() => {
   loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value)
+  nextTick(() => useResizableInteract('.modal-content'));
 })
 </script>
 
@@ -536,6 +543,7 @@ onMounted(() => {
     />
 
     <BModal
+      body-class="scrollbar"
       cancel-variant="outline-secondary"
       hide-footer
       ok-variant="secondary"
