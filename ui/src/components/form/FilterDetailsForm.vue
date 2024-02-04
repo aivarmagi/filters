@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import {Filter, FilterState} from "@/models/Filter";
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
 import type {Option} from "@/models/Option";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import type {Criteria} from "@/models/Criteria";
+import {useI18n} from "vue-i18n";
+import {type Filter, FilterState} from "@/models/Filter";
 
 defineProps<{
   currentFilter: Filter,
@@ -23,6 +24,8 @@ const emit = defineEmits<{
   (e: 'updateName', val: string): void
   (e: 'updateSelection', val: string): void
 }>()
+
+const {t} = useI18n()
 </script>
 
 <template>
@@ -36,8 +39,8 @@ const emit = defineEmits<{
             class-name="'pb-0'"
             required
             :id="`${currentFilter.id}`"
-            :label="'Name'"
-            :placeholder="'Enter name'"
+            :label="t('labels.name')"
+            :placeholder="t('placeholders.name')"
             :value="currentFilter.name"
             @update-value="(value: string) => emit('updateName', value)"
         />
@@ -50,7 +53,7 @@ const emit = defineEmits<{
             v-if="currentFilter.criterias"
             :criterias="currentFilter.criterias"
             :id="`${currentFilter.id}`"
-            :label="'Criteria'"
+            :label="t('labels.criteria')"
             @remove-criteria="(index) => emit('removeCriteria', index)"
             @update-criteria="(criteria, index) => emit('updateCriteria', criteria, index)"
             @update-field="(field, value, index) => emit('updateField', field, value, index)"
@@ -64,7 +67,7 @@ const emit = defineEmits<{
             variant="outline-secondary"
             @click="() => emit('addCriteria')"
         >
-          Add criteria
+          {{ t('buttons.addCriteria')}}
         </BButton>
       </BCol>
     </BRow>
@@ -75,7 +78,7 @@ const emit = defineEmits<{
             v-if="currentFilter.selection"
             :id="`${currentFilter.id}`"
             :options="selectionTypeOptions"
-            :label="'Selection'"
+            :label="t('labels.selection')"
             :value="currentFilter.selection"
             @update-value="(value) => emit('updateSelection', value)"
         />
@@ -90,9 +93,9 @@ const emit = defineEmits<{
             v-if="currentFilter.id !== FilterState.NEW"
             variant="outline-secondary"
             :loading="resettingFilter"
-            :loading-text="'Resetting ...'"
+            :loading-text="t('buttons.resetting')"
         >
-          Reset
+          {{ t('buttons.reset')}}
         </BButton>
 
         <BButton
@@ -100,15 +103,15 @@ const emit = defineEmits<{
             variant="outline-secondary"
             @click="() => emit('close')"
         >
-          Close
+          {{ t('buttons.close')}}
         </BButton>
 
         <BButton
             type="submit"
             :loading="filterSaving"
-            :loading-text="'Saving ...'"
+            :loading-text="t('buttons.saving')"
         >
-          Save changes
+          {{ t('buttons.saveChanges')}}
         </BButton>
       </BCol>
     </BRow>

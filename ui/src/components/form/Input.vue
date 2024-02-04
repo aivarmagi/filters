@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {ref, watch} from "vue";
 import type {InputType} from "bootstrap-vue-next";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps<{
   className?: string,
@@ -20,6 +21,8 @@ const emit = defineEmits<{
 const internalType = ref<InputType>()
 const internalValue = ref(props.value)
 const locale = ref('en-US') // et-EE
+
+const {t} = useI18n();
 
 const showDatepicker = () => internalType.value === 'date';
 
@@ -69,7 +72,7 @@ watch(() => props.value, (newVal) => {
 
 <!--        todo: form validation-->
 <!--            :state="!required ? null : internalValue?.length > 0 ? null : false"-->
-        <BFormInvalidFeedback>Value is required</BFormInvalidFeedback>
+        <BFormInvalidFeedback>{{t('feedbacks.valueRequired')}}</BFormInvalidFeedback>
       </BCol>
     </BRow>
   </BFormGroup>

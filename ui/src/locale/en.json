@@ -1,0 +1,60 @@
+{
+  "buttons": {
+    "addFilter": "Add filter",
+    "addCriteria": "Add criteria",
+    "cancel": "Cancel",
+    "close": "Close",
+    "confirm": "Confirm",
+    "ok": "OK",
+    "reset": "Reset",
+    "resetting": "Resetting...",
+    "saveChanges": "Save changes",
+    "saving": "Saving...",
+    "yes": "Yes"
+  },
+  "errors": {
+    "loadFilters": "Error loading filters. Please try again later."
+  },
+  "feedbacks": {
+    "valueRequired": "Value is required"
+  },
+  "labels": {
+    "actions": "Actions",
+    "criteria": "Criteria",
+    "criteriaCount": "Criteria count",
+    "id": "ID",
+    "modalMode": "Modal mode",
+    "name": "Name",
+    "selection": "Selection",
+    "totalCount": "Total count"
+  },
+  "placeholders": {
+    "date": "Enter date",
+    "name": "Enter name",
+    "number": "Enter number",
+    "value": "Enter value"
+  },
+  "messages": {
+    "disclaimerFirstLine": "This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.",
+    "disclaimerSecondLine": "Queries to backend are delayed by 500ms to simulate real world scenario.",
+    "filterAdded": "Filter has been added",
+    "filterReset": "Filter has been reset",
+    "filterRemoved": "Filter has been removed",
+    "filterSaved": "Filter has been saved",
+    "loadingFilter": "Loading filter...",
+    "loadingFilters": "Loading filters...",
+    "removeCriteria": "Are you sure you want to remove criteria?",
+    "removeFilter": "Are you sure you want to remove filter?",
+    "resetForm": "Are you sure you want to reset form?"
+  },
+  "titles": {
+    "addFilter": "Add filter",
+    "editFilter": "Edit filter"
+  },
+  "tooltips": {
+    "editFilter": "Edit filter",
+    "editInModal": "Add or edit filter in modal/non-modal mode",
+    "removeCriteria": "Remove criteria",
+    "removeFilter": "Remove filter"
+  }
+}

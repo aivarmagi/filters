@@ -11,8 +11,10 @@ import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 import FilterDetailsForm from "@/components/form/FilterDetailsForm.vue";
 import LocalStorageManager from "@/services/LocalStorageManager";
 import {useResizableInteract} from "@/views/MainPageHelpers";
+import {useI18n} from "vue-i18n";
 
 const {show} = useToast();
+const {t} = useI18n();
 
 const FILTER = 'filter';
 const HIDE_DISCLAIMER = 'hideDisclaimer';
@@ -189,7 +191,7 @@ const onFilterSave = async (event: any) => {
 const addFilter = async (filter: Filter) => {
   await filterService.postFilter(filter)
       .then((response) => {
-          show('Filter added successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          show(t('messages.filterAdded'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
           filters.value.push(response.data);
           totalRows.value = filters.value.length;
           onHideAddFilterModal();
@@ -205,7 +207,7 @@ const addFilter = async (filter: Filter) => {
 const updateFilter = async (filter: Filter) => {
   await filterService.putFilter(filter)
       .then((response) => {
-        show('Filter saved successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+        show(t('messages.filterSaved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
         filters.value = filters.value.map(f => f.id === response.data.id ? {...response.data} : f);
       })
       .catch((error) => {
@@ -273,7 +275,7 @@ const onFilterRemoved = async () => {
     removingFilter.value = true;
     await filterService.deleteFilter(removableFilterId.value as number)
         .then(() => {
-          show('Filter removed successfully', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          show(t('messages.filterRemoved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
           filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
           removableFilterId.value = undefined;
           totalRows.value = filters.value.length;
@@ -344,7 +346,7 @@ const getFilter = async (id: number, action: Action) => {
         loadedFilter.criterias?.sort((a, b) => a.id! - b.id!);
 
         if (Action.RESET === action) {
-          show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+          show(t('messages.filterReset'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
         }
 
         filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
@@ -392,17 +394,17 @@ onMounted(() => {
             :model-value="!hideDisclaimer"
             @update:model-value="onDisclaimerClose"
         >
-          This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.<br/>
-          Queries to backend are delayed by 500ms to simulate real world scenario.
+          {{t('messages.disclaimerFirstLine')}}<br/>
+          {{t('messages.disclaimerSecondLine')}}
         </BAlert>
 
         <Loading
-            :message="'Loading filters ...'"
+            :message="t('messages.loadingFilters')"
             :loading="loadInitialFilters"
         />
 
         <BAlert variant="danger" :model-value="loadError">
-          Error loading filters. Please try again later.
+          {{t('errors.loadFilters')}}
         </BAlert>
 
         <BTableSimple
@@ -414,22 +416,22 @@ onMounted(() => {
           <BThead>
             <BTr>
               <BTh class="col-1 hover-pointer" @click="onSortChanged('id', !sortDesc)">
-                ID
+                {{t('labels.id')}}
                 <span v-if="'id' === sortField">
                   <IIconoirSortUp v-if="sortDesc" />
                   <IIconoirSortDown v-else />
                 </span>
               </BTh>
               <BTh class="hover-pointer col-auto text-start" @click="onSortChanged('name', !sortDesc)">
-                Name
+                {{t('labels.name')}}
                 <span v-if="'name' === sortField">
                   <IIconoirSortUp v-if="sortDesc" />
                   <IIconoirSortDown v-else />
                 </span>
               </BTh>
-              <BTh class="col-1 text-nowrap">Criteria count</BTh>
-              <BTh class="col-1">Selection</BTh>
-              <BTh class="col-1">Action</BTh>
+              <BTh class="col-1 text-nowrap">{{t('labels.criteriaCount')}}</BTh>
+              <BTh class="col-1">{{t('labels.selection')}}</BTh>
+              <BTh class="col-1">{{t('labels.actions')}}</BTh>
             </BTr>
           </BThead>
 
@@ -452,7 +454,7 @@ onMounted(() => {
                     <IBxsEdit
                       class="hover-pointer"
                       role="button"
-                      v-b-tooltip="'Edit filter'"
+                      v-b-tooltip="t('tooltips.editFilter')"
                       v-if="!showFilterLoadingSpinner(filter.id)"
                       @click="() => toggleFilterDetails(filter)"
                     />
@@ -460,7 +462,7 @@ onMounted(() => {
 
                     <ITypcnDelete
                       class="hover-pointer"
-                      v-b-tooltip="'Remove filter'"
+                      v-b-tooltip="t('tooltips.removeFilter')"
                       v-if="totalRows > 1 && !showFilterRemoveSpinner(filter.id)"
                       @click="() => onShowRemoveFilterDialog(filter.id!)"
                     />
@@ -474,17 +476,16 @@ onMounted(() => {
                 <BTd class="p-0" colspan="5">
                   <Loading
                       class="text-center my-3"
-                      :message="'Loading filter ...'"
+                      :message="t('messages.loadingFilter')"
                       :loading="loadingFilter"
                   />
 
                   <BAlert class="text-center mx-3 mt-3" variant="danger" :model-value="loadFilterError">
-                    Error loading filter. Please try again later.
+                    {{t('errors.loadFilters')}}
                   </BAlert>
 
                   <template v-if="currentFilter && showFilterDetailsInline(filter.id as number)">
-                    <BCard class="border-0" :title="'Edit filter'"
-                    >
+                    <BCard class="border-0" :title="t('title.editFilter')">
                       <FilterDetailsForm
                           :current-filter="currentFilter"
                           :filter-saving="filterSaving"
@@ -508,7 +509,7 @@ onMounted(() => {
 
             <BTr class="text-start" v-if="!editInModal && currentFilter && FilterState.NEW === currentFilter.id && !openCollapseId">
               <BTd class="p-0" colspan="5">
-                <BCard class="border-0" :title="'Add new filter'">
+                <BCard class="border-0" :title="t('titles.addFilter')">
                   <FilterDetailsForm
                       :current-filter="currentFilter"
                       :filter-saving="filterSaving"
@@ -552,7 +553,7 @@ onMounted(() => {
           </BCol>
 
           <BCol class="col-auto mt-1 pt-1">
-            Total count: {{ totalRows }}
+            {{t('labels.totalCount')}}: {{ totalRows }}
           </BCol>
 
           <BCol class="col-auto mt-2" v-if="loadAdditionalFilters">
@@ -564,8 +565,8 @@ onMounted(() => {
                 switch
                 v-model="editInModal"
                 @change="onModalModeChanged">
-              <span v-b-tooltip="'Add or edit filter in modal/non-modal mode'">
-              Modal mode
+              <span v-b-tooltip="t('tooltips.editInModal')">
+                {{ t('labels.modalMode') }}
               </span>
             </BFormCheckbox>
           </BCol>
@@ -575,7 +576,7 @@ onMounted(() => {
                 class="me-3"
                 @click="() => onShowAddFilter()"
             >
-              Add filter
+              {{$t('buttons.addFilter')}}
             </BButton>
           </BCol>
         </BRow>
@@ -583,20 +584,20 @@ onMounted(() => {
     </BRow>
 
     <SimpleDialog
-        :button-cancel-text="'Close'"
-        :button-ok-text="'Yes'"
+        :button-cancel-text="t('buttons.close')"
+        :button-ok-text="t('buttons.yes')"
         :id="'disclaimer-dialog'"
-        :message="'Are you sure you want to reset the form?'"
+        :message="t('messages.resetForm')"
         :show="showFormResetDialog"
         @cancel="() => onCloseDialog(Action.RESET)"
         @confirm="onFormReset"
     />
 
     <SimpleDialog
-        :button-cancel-text="'Close'"
-        :button-ok-text="'Yes'"
+        :button-cancel-text="t('buttons.close')"
+        :button-ok-text="t('buttons.yes')"
         :id="'disclaimer-dialog'"
-        :message="'Are you sure you want to remove filter?'"
+        :message="t('messages.removeFilter')"
         :show="showRemoveFilterDialog"
         @cancel="() => onCloseDialog(Action.DELETE)"
         @confirm="onFilterRemoved"
@@ -611,9 +612,7 @@ onMounted(() => {
       size="lg"
       v-if="editInModal && showFilterDetailsModal && currentFilter"
       v-model="showFilterDetailsModal"
-      :cancel-title="'Close'"
-      :ok-title="'Confirm'"
-      :title="openCollapseId === FilterState.NEW ? 'Add new filter' : 'Edit filter'"
+      :title="openCollapseId ? t('titles.editFilter') : t('titles.addFilter')"
       @close="onHideAddFilterModal"
       @hide="onHideAddFilterModal"
     >

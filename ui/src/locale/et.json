@@ -1,0 +1,60 @@
+{
+  "buttons": {
+    "addFilter": "Lisa filter",
+    "addCriteria": "Lisa kriteerium",
+    "cancel": "Tühista",
+    "close": "Sulge",
+    "confirm": "Kinnita",
+    "ok": "OK",
+    "reset": "Lähtesta",
+    "resetting": "Lähtestamine...",
+    "saveChanges": "Salvesta muudatused",
+    "saving": "Salvestamine...",
+    "yes": "Jah"
+  },
+  "errors": {
+    "loadFilters": "Viga filtrite laadimisel. Palun proovi hiljem uuesti."
+  },
+  "feedbacks": {
+    "valueRequired": "Väärtus on nõutud"
+  },
+  "labels": {
+    "actions": "Tegevused",
+    "criteria": "Kriteerium",
+    "criteriaCount": "Krit. arv",
+    "id": "ID",
+    "modalMode": "Modaalis muutmine",
+    "name": "Nimi",
+    "selection": "Valik",
+    "totalCount": "Kokku"
+  },
+  "placeholders": {
+    "date": "Vali kuupäev",
+    "name": "Sisesta nimi",
+    "number": "Sisesta number",
+    "value": "Sisesta tekst"
+  },
+  "messages": {
+    "disclaimerFirstLine": "See koduleht on loodud kasutades Spring Boot 3 ja Vue.js 3 tehnoloogiaid. Eesmärgiks on õppida Vue.js algtasemel.",
+    "disclaimerSecondLine": "Tagaserveri päringud on viivitusega 500ms, et simuleerida olukordi reaalses maailmas",
+    "filterAdded": "Filter on lisatud",
+    "filterReset": "Filter on lähtestatud",
+    "filterRemoved": "Filter on eemaldatud",
+    "filterSaved": "Filter on salvestatud",
+    "loadingFilter": "Filtri laadimine...",
+    "loadingFilters": "Filtrite laadimine...",
+    "removeCriteria": "Kas oled kindel, et soovid eemaldada kriteeriumi?",
+    "removeFilter": "Kas oled kindel, et soovid eemaldada filtri?",
+    "resetForm": "Kas oled kindel, et soovid lähtestada vormi?"
+  },
+  "titles": {
+    "addFilter": "Lisa filter",
+    "editFilter": "Muuda filter"
+  },
+  "tooltips": {
+    "editFilter": "Muuda filter",
+    "editInModal": "Lisa või muuda filter modaalis või detailvaates",
+    "removeCriteria": "Eemalda kriteerium",
+    "removeFilter": "Eemalda filter"
+  }
+}

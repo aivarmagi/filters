@@ -5,6 +5,7 @@ import {onMounted, ref, watch} from "vue";
 import Input from "@/components/form/Input.vue";
 import type {InputType} from "bootstrap-vue-next";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
+import {useI18n} from "vue-i18n";
 
 const props = defineProps<{
   amountOptions: Option[],
@@ -29,6 +30,8 @@ const currentValue = ref("")
 const showRemoveCriteriaDialog = ref(false)
 const valuePlaceholder = ref("")
 const valueType = ref<InputType>()
+
+const {t} = useI18n();
 
 const getOperatorOptions = (criteriaName: string): Option[] => {
   if (CriteriaName.TITLE === criteriaName) {
@@ -82,10 +85,10 @@ const chooseInputType = (type: string) => {
 
 const chooseInputPlaceholder = (type: string) => {
   valuePlaceholder.value = CriteriaName.DATE === type
-      ? 'Enter date'
+      ? t('placeholders.date')
       : CriteriaName.AMOUNT === type
-          ? 'Enter number'
-          : 'Enter value'
+          ? t('placeholders.number')
+          : t('placeholders.value')
 }
 
 watch(() => props.criteria, (changedCriteria) => {
@@ -134,7 +137,7 @@ onMounted(() => {
       <BCol class="col-auto px-0 me-3 mt-1 button-container">
         <ITypcnDelete
             class="hover-pointer"
-            v-b-tooltip="'Remove criteria'"
+            v-b-tooltip="t('tooltips.removeCriteria')"
             v-if="criteriaCount > 1"
             @click="onShowRemoveCriteriaDialog"
         />
@@ -142,10 +145,10 @@ onMounted(() => {
     </BRow>
 
     <SimpleDialog
-        :button-cancel-text="'Close'"
-        :button-ok-text="'Yes'"
+        :button-cancel-text="t('buttons.cancel')"
+        :button-ok-text="t('buttons.yes')"
         :id="`disclaimer-remove-criteria-${id}`"
-        :message="'Are you sure you want to remove criteria?'"
+        :message="t('messages.removeCriteria')"
         :show="showRemoveCriteriaDialog"
         @cancel="onCloseRemoveCriteriaDialog"
         @confirm="onCriteriaRemove"
