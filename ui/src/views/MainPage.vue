@@ -14,11 +14,12 @@ import {useResizableInteract} from "@/views/MainPageHelpers";
 import {useI18n} from "vue-i18n";
 
 const {show} = useToast();
-const {t} = useI18n();
+const {t, locale} = useI18n();
 
+const ADD_EDIT_IN_MODAL = 'addEditInModal';
 const FILTER = 'filter';
 const HIDE_DISCLAIMER = 'hideDisclaimer';
-const ADD_EDIT_IN_MODAL = 'addEditInModal';
+const LOCALE = 'locale';
 const PAGE_SIZE = 'pageSize';
 const PAGE = 'page';
 const SORT_FIELD = 'sortField';
@@ -44,8 +45,9 @@ const showFilterDetailsModal = ref(false);
 const showFormResetDialog = ref(false);
 const showRemoveFilterDialog = ref(false);
 
-const pageSize = ref(LocalStorageManager.get<number>(PAGE_SIZE) || 5);
 const currentPage = ref(LocalStorageManager.get<number>(PAGE) || 1);
+const lang = ref(LocalStorageManager.get<string>(LOCALE) || locale);
+const pageSize = ref(LocalStorageManager.get<number>(PAGE_SIZE) || 5);
 const totalRows = ref(0);
 const sortField = ref(LocalStorageManager.get<string>(SORT_FIELD) || 'id');
 const sortDesc = ref(LocalStorageManager.get<boolean>(SORT_DESC) || false);
@@ -56,6 +58,8 @@ const selectionTypeOptions: Option[] = Object.keys(FilterSelectionType).map((key
 }));
 
 const pageSizeOptions: Option[] = [{text: '1', value: 1}, {text: '5', value: 5}, {text: '10', value: 10}];
+
+const localeOptions: Option[] = [{text: 'EN', value: 'en'}, {text: 'ET', value: 'et'}];
 
 const getCriteriasCount = (item: Filter) => {
   return item.criterias?.length || 0;
@@ -95,6 +99,12 @@ const onPaginationChanged = async (event: any, page: number) => {
 
   updateOrRemoveFilterStorage();
   await loadFilters(sortField.value, sortDesc.value, page, pageSize.value)
+};
+
+const onLocaleChanged = (val: any) => {
+  lang.value = val;
+  locale.value = val;
+  LocalStorageManager.save(LOCALE, val);
 };
 
 const onFilterNameUpdated = (val: string) => {
@@ -531,6 +541,16 @@ onMounted(() => {
 
         <BRow v-if="filters?.length > 0">
           <BCol class="col-auto ms-2 mt-1">
+            <BFormSelect
+                size="sm"
+                v-model="lang"
+                :id="'page-size-select'"
+                :options="localeOptions"
+                @change="onLocaleChanged"
+            />
+          </BCol>
+
+          <BCol class="col-auto mt-1">
             <BFormSelect
                 size="sm"
                 v-model="pageSize"
