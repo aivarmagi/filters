@@ -643,6 +643,7 @@ onMounted(() => {
           @add-criteria="onCriteriaAdded"
           @close="onHideAddFilterModal"
           @remove-criteria="onCriteriaRemoved"
+          @reset="onShowFormResetDialog"
           @save-filter="onFilterSave"
           @update-criteria="onCriteriaUpdated"
           @update-field="onCriteriaFieldUpdated"
