@@ -10,18 +10,13 @@ import {Action} from "@/enums/Action";
 import SimpleDialog from "@/components/dialog/SimpleDialog.vue";
 import FilterDetailsForm from "@/components/form/FilterDetailsForm.vue";
 import LocalStorageManager from "@/services/LocalStorageManager";
-// import '@interactjs/auto-start'
-// import '@interactjs/actions/drag'
-// import '@interactjs/actions/resize'
-// import '@interactjs/modifiers'
-// import '@interactjs/dev-tools'
-import interact from 'interactjs'
 import {useResizableInteract} from "@/views/MainPageHelpers";
 
 const {show} = useToast();
 
 const FILTER = 'filter';
 const HIDE_DISCLAIMER = 'hideDisclaimer';
+const ADD_EDIT_IN_MODAL = 'addEditInModal';
 const PAGE_SIZE = 'pageSize';
 const PAGE = 'page';
 const SORT_FIELD = 'sortField';
@@ -32,6 +27,7 @@ const removableFilterId = ref<number | FilterState>();
 const filters = ref<Filter[]>([]);
 const openCollapseId = ref<number | FilterState | undefined>(currentFilter.value?.id || undefined);
 
+const editInModal = ref<boolean>(LocalStorageManager.hasKey(ADD_EDIT_IN_MODAL) ? LocalStorageManager.get<boolean>(ADD_EDIT_IN_MODAL) : true);
 const filterSaving = ref(false);
 const hideDisclaimer = ref(LocalStorageManager.get<boolean>(HIDE_DISCLAIMER) || false);
 const loadAdditionalFilters = ref(false);
@@ -42,7 +38,7 @@ const loadInitialFilters = ref(true);
 const removingFilter = ref(false);
 const resetFilterError = ref(false);
 const resettingFilter = ref(false);
-const showAddFilterModal = ref(false);
+const showFilterDetailsModal = ref(false);
 const showFormResetDialog = ref(false);
 const showRemoveFilterDialog = ref(false);
 
@@ -63,19 +59,21 @@ const getCriteriasCount = (item: Filter) => {
   return item.criterias?.length || 0;
 };
 
+const showFilterLoadingSpinner = (id?: number | FilterState) => {
+  return loadingFilter.value === true && openCollapseId.value === id && editInModal.value;
+};
+
 const showFilterRemoveSpinner = (id?: number | FilterState) => {
   return removingFilter.value === true && removableFilterId.value !== undefined && removableFilterId.value === id;
 };
 
-const toggleCollapse = async (item: Filter) => {
+const toggleFilterDetails = async (item: Filter) => {
   if (openCollapseId.value === item.id) {
-    openCollapseId.value = undefined;
-    currentFilter.value = undefined;
     updateOrRemoveFilterStorage();
     return;
   }
 
-  openCollapseId.value = item.id;
+  updateOrRemoveFilterStorage();
   await getFilter(item.id as number, Action.LOAD);
 };
 
@@ -135,7 +133,16 @@ const onCriteriaAdded = () => {
   }
 };
 
-const onShowAddFilterModal = () => {
+const onShowAddFilter = () => {
+  if (openCollapseId.value) {
+    openCollapseId.value = undefined;
+    currentFilter.value = undefined;
+  }
+
+  if (editInModal.value) {
+    showFilterDetailsModal.value = true;
+  }
+
   const addedFilter: Filter = {
     id: FilterState.NEW,
     name: '',
@@ -143,16 +150,25 @@ const onShowAddFilterModal = () => {
     criterias: [createCriteria()],
   };
 
-  openCollapseId.value = undefined;
   currentFilter.value = {...addedFilter};
   updateOrRemoveFilterStorage({...addedFilter});
-  showAddFilterModal.value = true;
 };
 
 const onHideAddFilterModal = () => {
   currentFilter.value = undefined;
-  showAddFilterModal.value = false;
+  showFilterDetailsModal.value = false;
   updateOrRemoveFilterStorage();
+}
+
+const onModalModeChanged = (value: any) => {
+  const modalMode = value as boolean;
+
+  editInModal.value = modalMode;
+  LocalStorageManager.save(ADD_EDIT_IN_MODAL, modalMode);
+
+  if (modalMode && currentFilter.value?.id) {
+    showFilterDetailsModal.value = true;
+  }
 }
 
 const onFilterSave = async (event: any) => {
@@ -250,9 +266,7 @@ const onShowRemoveFilterDialog = (id: number | FilterState) => {
   showRemoveFilterDialog.value = true;
 }
 
-const onFormReset = async () => {
-  await getFilter(currentFilter.value!.id as number, Action.RESET)
-};
+const onFormReset = async () => await getFilter(currentFilter.value!.id as number, Action.RESET);
 
 const onFilterRemoved = async () => {
   if (removableFilterId.value) {
@@ -323,6 +337,7 @@ const getFilter = async (id: number, action: Action) => {
       resettingFilter.value = true;
     }
 
+  openCollapseId.value = id;
   await filterService.getFilter(id)
       .then((response) => {
         const loadedFilter: Filter = response.data;
@@ -331,9 +346,14 @@ const getFilter = async (id: number, action: Action) => {
         if (Action.RESET === action) {
           show('Filter has been reset', { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
         }
+
         filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
         currentFilter.value = response.data;
         updateOrRemoveFilterStorage(response.data);
+
+        if (editInModal.value && Action.LOAD === action) {
+          showFilterDetailsModal.value = true;
+        }
       })
       .catch((error) => {
         console.error(`Error with filter ${action.toLowerCase()}:`, error);
@@ -351,6 +371,10 @@ const getFilter = async (id: number, action: Action) => {
         }
       });
 };
+
+const showFilterDetailsInline = (filterId?: number): boolean => {
+  return openCollapseId.value === filterId && !loadingFilter.value && !loadFilterError.value && !editInModal.value;
+}
 
 onMounted(() => {
   loadFilters(sortField.value, sortDesc.value, currentPage.value, pageSize.value)
@@ -426,11 +450,13 @@ onMounted(() => {
                 <BTd class="bg-light">
                   <div class="action-icon-container">
                     <IBxsEdit
-                      class="mx-2 hover-pointer"
+                      class="hover-pointer"
                       role="button"
                       v-b-tooltip="'Edit filter'"
-                      @click="() => toggleCollapse(filter)"
+                      v-if="!showFilterLoadingSpinner(filter.id)"
+                      @click="() => toggleFilterDetails(filter)"
                     />
+                    <Loading class="me-1" :loading="showFilterLoadingSpinner(filter.id)" />
 
                     <ITypcnDelete
                       class="hover-pointer"
@@ -444,7 +470,7 @@ onMounted(() => {
                 </BTd>
               </BTr>
 
-              <BTr class="text-start" v-if="filter.id === openCollapseId">
+              <BTr class="text-start" v-if="openCollapseId === filter.id && !showFilterLoadingSpinner(filter.id)">
                 <BTd class="p-0" colspan="5">
                   <Loading
                       class="text-center my-3"
@@ -456,31 +482,54 @@ onMounted(() => {
                     Error loading filter. Please try again later.
                   </BAlert>
 
-                  <BCard class="border-0" :title="'Edit filter'" v-if="!loadingFilter && !loadFilterError && currentFilter">
-                    <FilterDetailsForm
-                        :current-filter="currentFilter"
-                        :filter-saving="filterSaving"
-                        :resetting-filter="resettingFilter"
-                        :selection-type-options="selectionTypeOptions"
-                        @add-criteria="onCriteriaAdded"
-                        @close="() => toggleCollapse(filter)"
-                        @remove-criteria="onCriteriaRemoved"
-                        @reset="onShowFormResetDialog"
-                        @save-filter="onFilterSave"
-                        @update-criteria="onCriteriaUpdated"
-                        @update-field="onCriteriaFieldUpdated"
-                        @update-name="onFilterNameUpdated"
-                        @update-selection="onFilterSelectionUpdated"
-                      />
-                  </BCard>
+                  <template v-if="currentFilter && showFilterDetailsInline(filter.id as number)">
+                    <BCard class="border-0" :title="'Edit filter'"
+                    >
+                      <FilterDetailsForm
+                          :current-filter="currentFilter"
+                          :filter-saving="filterSaving"
+                          :resetting-filter="resettingFilter"
+                          :selection-type-options="selectionTypeOptions"
+                          @add-criteria="onCriteriaAdded"
+                          @close="() => toggleFilterDetails(filter)"
+                          @remove-criteria="onCriteriaRemoved"
+                          @reset="onShowFormResetDialog"
+                          @save-filter="onFilterSave"
+                          @update-criteria="onCriteriaUpdated"
+                          @update-field="onCriteriaFieldUpdated"
+                          @update-name="onFilterNameUpdated"
+                          @update-selection="onFilterSelectionUpdated"
+                        />
+                    </BCard>
+                  </template>
                 </BTd>
               </BTr>
             </template>
+
+            <BTr class="text-start" v-if="!editInModal && currentFilter && FilterState.NEW === currentFilter.id && !openCollapseId">
+              <BTd class="p-0" colspan="5">
+                <BCard class="border-0" :title="'Add new filter'">
+                  <FilterDetailsForm
+                      :current-filter="currentFilter"
+                      :filter-saving="filterSaving"
+                      :selection-type-options="selectionTypeOptions"
+                      @add-criteria="onCriteriaAdded"
+                      @close="onHideAddFilterModal"
+                      @remove-criteria="onCriteriaRemoved"
+                      @save-filter="onFilterSave"
+                      @update-criteria="onCriteriaUpdated"
+                      @update-field="onCriteriaFieldUpdated"
+                      @update-name="onFilterNameUpdated"
+                      @update-selection="onFilterSelectionUpdated"
+                  />
+                </BCard>
+              </BTd>
+            </BTr>
           </BTbody>
         </BTableSimple>
 
         <BRow v-if="filters?.length > 0">
-          <BCol class="col-auto ms-2">
+          <BCol class="col-auto ms-2 mt-1">
             <BFormSelect
                 size="sm"
                 v-model="pageSize"
@@ -490,7 +539,7 @@ onMounted(() => {
             />
           </BCol>
 
-          <BCol class="col-auto">
+          <BCol class="col-auto mt-1">
             <BPagination
                 align="end"
                 size="sm"
@@ -502,7 +551,7 @@ onMounted(() => {
             />
           </BCol>
 
-          <BCol class="col-auto mt-1">
+          <BCol class="col-auto mt-1 pt-1">
             Total count: {{ totalRows }}
           </BCol>
 
@@ -510,10 +559,21 @@ onMounted(() => {
             <Loading :loading="loadAdditionalFilters"/>
           </BCol>
 
-          <BCol class="text-end">
+          <BCol class="d-flex justify-content-end mt-1 pt-1">
+            <BFormCheckbox
+                switch
+                v-model="editInModal"
+                @change="onModalModeChanged">
+              <span v-b-tooltip="'Add or edit filter in modal/non-modal mode'">
+              Modal mode
+              </span>
+            </BFormCheckbox>
+          </BCol>
+
+          <BCol class="col-auto text-end mt-0">
             <BButton
                 class="me-3"
-                @click="onShowAddFilterModal"
+                @click="() => onShowAddFilter()"
             >
               Add filter
             </BButton>
@@ -549,12 +609,13 @@ onMounted(() => {
       ok-variant="secondary"
       scrollable
       size="lg"
+      v-if="editInModal && showFilterDetailsModal && currentFilter"
+      v-model="showFilterDetailsModal"
       :cancel-title="'Close'"
       :ok-title="'Confirm'"
-      :title="'Add new filter'"
-      v-if="currentFilter"
-      v-model="showAddFilterModal"
-      @hidden="onHideAddFilterModal"
+      :title="openCollapseId === FilterState.NEW ? 'Add new filter' : 'Edit filter'"
+      @close="onHideAddFilterModal"
+      @hide="onHideAddFilterModal"
     >
       <FilterDetailsForm
           :current-filter="currentFilter"
@@ -580,6 +641,7 @@ onMounted(() => {
 
 .action-icon-container {
   display: flex;
-  align-items: end;
+  align-items: center;
+  justify-content: space-evenly;
 }
 </style>

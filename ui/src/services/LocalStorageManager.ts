@@ -28,6 +28,14 @@ class LocalStorageManager {
             console.error(`Error removing data from localStorage: ${error}`);
         }
     }
+
+    static hasKey(key: string): boolean {
+        try {
+            return localStorage.getItem(key) !== null;
+        } catch (error) {
+            return false;
+        }
+    }
 }
 
 export default LocalStorageManager;
