@@ -544,6 +544,7 @@ onMounted(() => {
             <BFormSelect
                 size="sm"
                 v-model="lang"
+                v-b-tooltip="t('tooltips.changeLocale')"
                 :id="'page-size-select'"
                 :options="localeOptions"
                 @change="onLocaleChanged"
@@ -554,6 +555,7 @@ onMounted(() => {
             <BFormSelect
                 size="sm"
                 v-model="pageSize"
+                v-b-tooltip="t('tooltips.changePageSize')"
                 :id="'page-size-select'"
                 :options="pageSizeOptions"
                 @change="onPageSizeChanged"

@@ -52,6 +52,8 @@
     "editFilter": "Muuda filter"
   },
   "tooltips": {
+    "changeLocale": "Vali keel",
+    "changePageSize": "Vali tulemuste arv lehel",
     "editFilter": "Muuda filter",
     "editInModal": "Lisa või muuda filter modaalis või detailvaates",
     "removeCriteria": "Eemalda kriteerium",
