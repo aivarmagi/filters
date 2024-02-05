@@ -52,7 +52,7 @@ const totalRows = ref(0);
 const sortField = ref(LocalStorageManager.get<string>(SORT_FIELD) || 'id');
 const sortDesc = ref(LocalStorageManager.get<boolean>(SORT_DESC) || false);
 
-const selectionTypeOptions: Option[] = Object.keys(FilterSelectionType).map((key: string) => ({
+const selectionTypeOptions: (string | number | Record<string, unknown>)[] = Object.keys(FilterSelectionType).map((key: string) => ({
   text: (FilterSelectionType as FilterSelectionTypeRecord)[key],
   value: key,
 }));

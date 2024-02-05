@@ -33,7 +33,6 @@ declare module 'vue' {
     CriteriaGroup: typeof import('./src/components/form/CriteriaGroup.vue')['default']
     CriteriaGroupItem: typeof import('./src/components/form/CriteriaGroupItem.vue')['default']
     FilterDetailsForm: typeof import('./src/components/form/FilterDetailsForm.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
     IBxsEdit: typeof import('~icons/bxs/edit')['default']
     IIconoirSortDown: typeof import('~icons/iconoir/sort-down')['default']
     IIconoirSortUp: typeof import('~icons/iconoir/sort-up')['default']
@@ -42,8 +41,6 @@ declare module 'vue' {
     Loading: typeof import('./src/components/Loading.vue')['default']
     RadioGroup: typeof import('./src/components/form/RadioGroup.vue')['default']
     SimpleDialog: typeof import('./src/components/dialog/SimpleDialog.vue')['default']
-    TheWelcome: typeof import('./src/components/TheWelcome.vue')['default']
-    WelcomeItem: typeof import('./src/components/WelcomeItem.vue')['default']
   }
   export interface ComponentCustomProperties {
     vBTooltip: typeof import('bootstrap-vue-next')['vBTooltip']

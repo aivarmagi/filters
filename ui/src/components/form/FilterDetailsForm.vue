@@ -10,7 +10,7 @@ defineProps<{
   currentFilter: Filter,
   filterSaving: boolean,
   resettingFilter?: boolean,
-  selectionTypeOptions: Option[],
+  selectionTypeOptions: (string | number | Record<string, unknown>)[],
 }>()
 
 const emit = defineEmits<{

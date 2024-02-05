@@ -6,7 +6,7 @@ const props = defineProps<{
   id: string,
   label: string,
   labelCols?: number,
-  options: Option[],
+  options: (string | number | Record<string, unknown>)[],
   value: string,
 }>()
 
