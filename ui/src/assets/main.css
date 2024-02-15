@@ -1,5 +1,5 @@
 @import './base.css';
-@import './override.css';
+@import 'override.scss';
 
 #app {
   max-width: 1280px;
