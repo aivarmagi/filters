@@ -495,7 +495,7 @@ onMounted(() => {
                   </BAlert>
 
                   <template v-if="currentFilter && showFilterDetailsInline(filter.id as number)">
-                    <BCard class="border-0" :title="t('title.editFilter')">
+                    <BCard class="border-0" :title="t('titles.editFilter')">
                       <FilterDetailsForm
                           :current-filter="currentFilter"
                           :filter-saving="filterSaving"
