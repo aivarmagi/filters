@@ -404,8 +404,7 @@ onMounted(() => {
             :model-value="!hideDisclaimer"
             @update:model-value="onDisclaimerClose"
         >
-          {{t('messages.disclaimerFirstLine')}}<br/>
-          {{t('messages.disclaimerSecondLine')}}
+          {{t('messages.disclaimer')}}
         </BAlert>
 
         <Loading

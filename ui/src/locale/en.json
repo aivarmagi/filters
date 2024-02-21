@@ -35,8 +35,7 @@
     "value": "Enter value"
   },
   "messages": {
-    "disclaimerFirstLine": "This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.",
-    "disclaimerSecondLine": "Queries to backend are delayed by 500ms to simulate real world scenario.",
+    "disclaimer": "This page is created with Spring Boot 3 and Vue.js 3. Purpose of it is to learn Vue.js basics.",
     "filterAdded": "Filter has been added",
     "filterReset": "Filter has been reset",
     "filterRemoved": "Filter has been removed",

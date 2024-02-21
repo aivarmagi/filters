@@ -35,8 +35,7 @@
     "value": "Sisesta tekst"
   },
   "messages": {
-    "disclaimerFirstLine": "See koduleht on loodud kasutades Spring Boot 3 ja Vue.js 3 tehnoloogiaid. Eesmärgiks on õppida Vue.js algtasemel.",
-    "disclaimerSecondLine": "Tagaserveri päringud on viivitusega 500ms, et simuleerida olukordi reaalses maailmas",
+    "disclaimer": "See koduleht on loodud kasutades Spring Boot 3 ja Vue.js 3 tehnoloogiaid. Eesmärgiks on õppida Vue.js algtasemel.",
     "filterAdded": "Filter on lisatud",
     "filterReset": "Filter on lähtestatud",
     "filterRemoved": "Filter on eemaldatud",
