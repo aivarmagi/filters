@@ -1,31 +1,35 @@
 import type {Filter} from "@/models/Filter";
-import type {AxiosResponse} from "axios";
 import {doDelete, doGet, doPost, doPut} from "@/services/apiClient";
+import {map, Observable} from "rxjs";
 
 export default {
-    async getFilters(field: string, sortDesc: boolean, page: number, pageSize: number): Promise<AxiosResponse<PageableResponse<Filter>>> {
-        return await doGet<PageableResponse<Filter>>('/filters', {
+    getFilters(field: string, sortDesc: boolean, page: number, pageSize: number): Observable<PageableResponse<Filter>> {
+        return doGet<PageableResponse<Filter>>('/filters', {
             params: {
                 page: page - 1,
                 size: pageSize,
                 sort: `${field},${sortDesc ? 'desc' : 'asc'}`
             }
-        });
+        }).pipe(map(response => response.data));
     },
 
-    async getFilter(id: number): Promise<AxiosResponse<Filter>> {
-        return await doGet<Filter>(`/filters/${id}`);
+    getFilter(id: number): Observable<Filter> {
+        return doGet<Filter>(`/filters/${id}`)
+            .pipe(map(response => response.data));
     },
 
-    async putFilter(filter: Filter): Promise<AxiosResponse<Filter>> {
-        return await doPut<Filter>(`/filters/${filter.id}`, filter);
+    putFilter(filter: Filter): Observable<Filter> {
+        return doPut<Filter>(`/filters/${filter.id}`, filter)
+            .pipe(map(response => response.data));
     },
 
-    async postFilter(filter: Filter): Promise<AxiosResponse<Filter>> {
-        return await doPost<Filter>('/filters', filter);
+    postFilter(filter: Filter): Observable<Filter> {
+        return doPost<Filter>('/filters', filter)
+            .pipe(map(response => response.data));
     },
 
-    async deleteFilter(id: number): Promise<AxiosResponse<void>> {
-        return await doDelete<void>(`/filters/${id}`);
+    deleteFilter(id: number): Observable<void> {
+        return doDelete<void>(`/filters/${id}`)
+            .pipe(map(response => response.data));
     }
 };
