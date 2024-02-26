@@ -2,7 +2,7 @@
 import {nextTick, onMounted, ref} from "vue";
 import filterService from "@/services/filterService";
 import {Filter, FilterSelectionType, type FilterSelectionTypeRecord, FilterState} from "@/models/Filter";
-import {BContainer, useToast} from "bootstrap-vue-next";
+import {BContainer} from "bootstrap-vue-next";
 import type {Option} from "@/models/Option";
 import {createCriteria, type Criteria} from "@/models/Criteria";
 import Loading from "@/components/Loading.vue";
@@ -12,8 +12,8 @@ import FilterDetailsForm from "@/components/form/FilterDetailsForm.vue";
 import LocalStorageManager from "@/services/LocalStorageManager";
 import {useResizableInteract} from "@/views/MainPageHelpers";
 import {useI18n} from "vue-i18n";
+import toastService from "@/services/toastService";
 
-const {show} = useToast();
 const {t, locale} = useI18n();
 
 const ADD_EDIT_IN_MODAL = 'addEditInModal';
@@ -207,7 +207,7 @@ const addFilter = (filter: Filter) => {
 }
 
 const handleAddFilterSuccess = (response: Filter) => {
-  show(t('messages.filterAdded'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+  toastService.showInfo(t('messages.filterAdded'))
   filters.value.push(response);
   totalRows.value = filters.value.length;
   onHideAddFilterModal();
@@ -222,7 +222,7 @@ const updateFilter = (filter: Filter) => {
 }
 
 const handleUpdateFilterSuccess = (response: Filter) => {
-  show(t('messages.filterSaved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+  toastService.showInfo(t('messages.filterSaved'))
   filters.value = filters.value.map(f => f.id === response.id ? {...response} : f);
 }
 
@@ -290,7 +290,7 @@ const onFilterRemoved = () => {
 }
 
 const handleDeleteFilterSuccess = () => {
-  show(t('messages.filterRemoved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+  toastService.showInfo(t('messages.filterRemoved'))
   filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
   removableFilterId.value = undefined;
   totalRows.value = filters.value.length;
@@ -366,7 +366,7 @@ const handleGetFilterSuccess = (id: number, action: Action, response: Filter) =>
   loadedFilter.criterias?.sort((a, b) => a.id! - b.id!);
 
   if (Action.RESET === action) {
-    show(t('messages.filterReset'), {value: 3000, interval: 100, progressProps: {variant: 'secondary'}})
+    toastService.showInfo(t('messages.filterReset'))
   }
 
   filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
