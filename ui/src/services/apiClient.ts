@@ -1,4 +1,4 @@
-import axios, {type AxiosInstance, type AxiosRequestConfig, type AxiosResponse} from 'axios';
+import axios, {type AxiosInstance, type AxiosRequestConfig, type AxiosResponse} from "axios";
 import {catchError, from, Observable, of} from "rxjs";
 
 const apiClient: Readonly<AxiosInstance> = axios.create({

@@ -10,7 +10,3 @@ defineProps<{
     <BSpinner class="me-2" small /> {{ message }}
   </div>
 </template>
-
-<style scoped>
-
-</style>

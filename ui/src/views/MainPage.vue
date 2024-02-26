@@ -28,7 +28,7 @@ const SORT_DESC = 'sortDesc';
 const currentFilter = ref<Filter | undefined>(LocalStorageManager.get<Filter>(FILTER) || undefined);
 const removableFilterId = ref<number | FilterState>();
 const filters = ref<Filter[]>([]);
-const openCollapseId = ref<number | FilterState | undefined>(currentFilter.value?.id || undefined);
+const openCollapseId = ref<number | FilterState | undefined>(currentFilter.value?.id ?? undefined);
 
 const editInModal = ref<boolean>(LocalStorageManager.hasKey(ADD_EDIT_IN_MODAL) ? LocalStorageManager.get<boolean>(ADD_EDIT_IN_MODAL) : true);
 const filterSaving = ref(false);
@@ -62,7 +62,7 @@ const pageSizeOptions: Option[] = [{text: '1', value: 1}, {text: '5', value: 5},
 const localeOptions: Option[] = [{text: 'EN', value: 'en'}, {text: 'ET', value: 'et'}];
 
 const getCriteriasCount = (item: Filter) => {
-  return item.criterias?.length || 0;
+  return item.criterias?.length ?? 0;
 };
 
 const showFilterLoadingSpinner = (id?: number | FilterState) => {
@@ -125,7 +125,7 @@ const onCriteriaUpdated = (val: Criteria, index: number) => {
 };
 
 const onCriteriaFieldUpdated = (field: string, value: string, index: number) => {
-  if (currentFilter.value?.criterias && currentFilter.value.criterias[index]) {
+  if (currentFilter.value?.criterias?.[index]) {
     (currentFilter.value.criterias[index] as any)[field] = value;
     updateOrRemoveFilterStorage(currentFilter.value);
   }
@@ -200,34 +200,30 @@ const onFilterSave = (event: any) => {
 
 const addFilter = (filter: Filter) => {
   filterService.postFilter(filter).subscribe({
-    next: (response) => {
-      show(t('messages.filterAdded'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-      filters.value.push(response);
-      totalRows.value = filters.value.length;
-      onHideAddFilterModal();
-    },
-    error: (error) => {
-      console.error('Error adding filter:', error);
-    },
-    complete: () => {
-      filterSaving.value = false;
-    }
+    next: (response) => handleAddFilterSuccess(response),
+    error: (error) => console.error('Error adding filter:', error),
+    complete: () => filterSaving.value = false
   })
+}
+
+const handleAddFilterSuccess = (response: Filter) => {
+  show(t('messages.filterAdded'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+  filters.value.push(response);
+  totalRows.value = filters.value.length;
+  onHideAddFilterModal();
 }
 
 const updateFilter = (filter: Filter) => {
   filterService.putFilter(filter).subscribe({
-    next: (response) => {
-      show(t('messages.filterSaved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-      filters.value = filters.value.map(f => f.id === response.id ? {...response} : f);
-    },
-    error: (error) => {
-      console.error('Error updating filter:', error);
-    },
-    complete: () => {
-      filterSaving.value = false;
-    }
+    next: (response) => handleUpdateFilterSuccess(response),
+    error: (error) => console.error('Error updating filter:', error),
+    complete: () => filterSaving.value = false
   })
+}
+
+const handleUpdateFilterSuccess = (response: Filter) => {
+  show(t('messages.filterSaved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+  filters.value = filters.value.map(f => f.id === response.id ? {...response} : f);
 }
 
 const updateOrRemoveFilterStorage = (filter?: Filter) => {
@@ -286,20 +282,18 @@ const onFilterRemoved = () => {
   if (removableFilterId.value) {
     removingFilter.value = true;
     filterService.deleteFilter(removableFilterId.value as number).subscribe({
-      next: () => {
-        show(t('messages.filterRemoved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-        filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
-        removableFilterId.value = undefined;
-        totalRows.value = filters.value.length;
-      },
-      error: (error) => {
-        console.error('Error removing filter:', error);
-      },
-      complete: () => {
-        removingFilter.value = false;
-      }
+      next: () => handleDeleteFilterSuccess(),
+      error: (error) => console.error('Error removing filter:', error),
+      complete: () => removingFilter.value = false
     })
   }
+}
+
+const handleDeleteFilterSuccess = () => {
+  show(t('messages.filterRemoved'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
+  filters.value = filters.value.filter(f => f.id !== removableFilterId.value);
+  removableFilterId.value = undefined;
+  totalRows.value = filters.value.length;
 }
 
 const onPageSizeChanged = (size: any) => {
@@ -313,35 +307,41 @@ const loadFilters = (field: string, sortDescending: boolean, page: number, size:
   }
 
   filterService.getFilters(field, sortDescending, page, size).subscribe({
-    next: (response) => {
-      const loadedFilters = response.content;
-      loadedFilters.forEach((filter: Filter) => {
-        filter.criterias = filter.criterias?.sort((a, b) => a.id! - b.id!);
-      });
-      filters.value = loadedFilters;
-      totalRows.value = response.totalElements;
-    },
-    error: (error) => {
-      console.error('Error loading filters:', error);
-      loadError.value = true;
-    },
-    complete: () => {
-      updateSortField(field);
-      updateSortDesc(sortDescending);
-      updateCurrentPage(page);
-      updatePageSizeStorage(size);
-
-      if (!currentFilter.value) {
-        updateOrRemoveFilterStorage()
-      }
-
-      if (loadInitialFilters.value) {
-        loadInitialFilters.value = false;
-      } else {
-        loadAdditionalFilters.value = false;
-      }
-    }
+    next: (response) => handleGetFiltersSuccess(response),
+    error: (error) => handleGetFiltersError(error),
+    complete: () => handleGetFiltersComplete(field, sortDescending, page, size)
   })
+}
+
+const handleGetFiltersSuccess = (response: PageableResponse<Filter>) => {
+  const loadedFilters = response.content;
+  loadedFilters.forEach((filter: Filter) => {
+    filter.criterias = filter.criterias?.sort((a, b) => a.id! - b.id!);
+  });
+  filters.value = loadedFilters;
+  totalRows.value = response.totalElements;
+}
+
+const handleGetFiltersError = (error: any) => {
+  console.error('Error loading filters:', error);
+  loadError.value = true;
+}
+
+const handleGetFiltersComplete = (field: string, sortDescending: boolean, page: number, size: number) => {
+  updateSortField(field);
+  updateSortDesc(sortDescending);
+  updateCurrentPage(page);
+  updatePageSizeStorage(size);
+
+  if (!currentFilter.value) {
+    updateOrRemoveFilterStorage()
+  }
+
+  if (loadInitialFilters.value) {
+    loadInitialFilters.value = false;
+  } else {
+    loadAdditionalFilters.value = false;
+  }
 }
 
 const getFilter = (id: number, action: Action) => {
@@ -355,39 +355,45 @@ const getFilter = (id: number, action: Action) => {
 
   openCollapseId.value = id;
   filterService.getFilter(id).subscribe({
-    next: (response) => {
-      const loadedFilter: Filter = response;
-      loadedFilter.criterias?.sort((a, b) => a.id! - b.id!);
-
-      if (Action.RESET === action) {
-        show(t('messages.filterReset'), { value: 3000, interval: 100, progressProps: { variant: 'secondary' } })
-      }
-
-      filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
-      currentFilter.value = response;
-      updateOrRemoveFilterStorage(response);
-
-      if (editInModal.value && Action.LOAD === action) {
-        showFilterDetailsModal.value = true;
-      }
-    },
-    error: (error) => {
-      console.error(`Error with filter ${action.toLowerCase()}:`, error);
-      if (Action.LOAD === action) {
-        loadFilterError.value = true;
-      } else if (Action.RESET === action) {
-        resetFilterError.value = true;
-      }
-    },
-    complete: () => {
-      if (Action.LOAD === action) {
-        loadingFilter.value = false;
-      } else if (Action.RESET === action) {
-        resettingFilter.value = false;
-      }
-    }
+    next: (response) => handleGetFilterSuccess(id, action, response),
+    error: (error) => handleGetFilterError(action, error),
+    complete: () => handleGetFilterComplete(action)
   })
 };
+
+const handleGetFilterSuccess = (id: number, action: Action, response: Filter) => {
+  const loadedFilter: Filter = response;
+  loadedFilter.criterias?.sort((a, b) => a.id! - b.id!);
+
+  if (Action.RESET === action) {
+    show(t('messages.filterReset'), {value: 3000, interval: 100, progressProps: {variant: 'secondary'}})
+  }
+
+  filters.value = filters.value.map(f => f.id === id ? {...loadedFilter} : f);
+  currentFilter.value = response;
+  updateOrRemoveFilterStorage(response);
+
+  if (editInModal.value && Action.LOAD === action) {
+    showFilterDetailsModal.value = true;
+  }
+}
+
+const handleGetFilterError = (action: Action, error: any) => {
+  console.error(`Error with filter ${action.toLowerCase()}:`, error);
+  if (Action.LOAD === action) {
+    loadFilterError.value = true;
+  } else if (Action.RESET === action) {
+    resetFilterError.value = true;
+  }
+}
+
+const handleGetFilterComplete = (action: Action) => {
+  if (Action.LOAD === action) {
+    loadingFilter.value = false;
+  } else if (Action.RESET === action) {
+    resettingFilter.value = false;
+  }
+}
 
 const showFilterDetailsInline = (filterId?: number): boolean => {
   return openCollapseId.value === filterId && !loadingFilter.value && !loadFilterError.value && !editInModal.value;

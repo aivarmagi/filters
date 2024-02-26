@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import {ref} from "vue";
-import type {Option} from "@/models/Option";
 
 const props = defineProps<{
   id: string,
@@ -10,9 +9,7 @@ const props = defineProps<{
   value: string,
 }>()
 
-const emit = defineEmits<{
-  (e: 'updateValue', val: string): void
-}>()
+const emit = defineEmits<(e: 'updateValue', val: string) => void>()
 
 const internalValue = ref(props.value)
 </script>
@@ -37,7 +34,3 @@ const internalValue = ref(props.value)
     </BCol>
   </BFormGroup>
 </template>
-
-<style scoped>
-
-</style>

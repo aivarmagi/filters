@@ -72,6 +72,3 @@ const onCriteriaRemoved = (index: number) => {
     </BRow>
   </BFormGroup>
 </template>
-
-<style scoped>
-</style>

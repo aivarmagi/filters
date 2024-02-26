@@ -6,6 +6,3 @@ import MainPage from "@/views/MainPage.vue";
   <MainPage />
   <BToaster />
 </template>
-
-<style scoped>
-</style>

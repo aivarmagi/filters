@@ -23,12 +23,12 @@ const emit = defineEmits<{
   (e: 'updateField', field: string, value: string): void
 }>()
 
-const name = ref("")
-const operator = ref("")
+const name = ref('')
+const operator = ref('')
 const operatorOptions= ref<Option[]>([])
-const currentValue = ref("")
+const currentValue = ref('')
 const showRemoveCriteriaDialog = ref(false)
-const valuePlaceholder = ref("")
+const valuePlaceholder = ref('')
 const valueType = ref<InputType>()
 
 const {t} = useI18n();
@@ -76,19 +76,23 @@ const onCriteriaRemove = () => {
 }
 
 const chooseInputType = (type: string) => {
-  valueType.value = CriteriaName.DATE === type
-      ? 'date'
-      : CriteriaName.AMOUNT === type
-          ? 'number'
-          : 'text'
+  if (CriteriaName.DATE === type) {
+    valueType.value = 'date'
+  } else if (CriteriaName.AMOUNT === type) {
+    valueType.value = 'number'
+  } else {
+    valueType.value = 'text'
+  }
 }
 
 const chooseInputPlaceholder = (type: string) => {
-  valuePlaceholder.value = CriteriaName.DATE === type
-      ? t('placeholders.date')
-      : CriteriaName.AMOUNT === type
-          ? t('placeholders.number')
-          : t('placeholders.value')
+  if (CriteriaName.DATE === type) {
+    valuePlaceholder.value = t('placeholders.date')
+  } else if (CriteriaName.AMOUNT === type) {
+    valuePlaceholder.value = t('placeholders.number')
+  } else {
+    valuePlaceholder.value = t('placeholders.value')
+  }
 }
 
 watch(() => props.criteria, (changedCriteria) => {

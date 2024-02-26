@@ -2,6 +2,7 @@
 import {ref, watch} from "vue";
 import type {InputType} from "bootstrap-vue-next";
 import {useI18n} from "vue-i18n";
+import {Language, LanguageCode} from "@/enums/Language";
 
 const props = defineProps<{
   className?: string,
@@ -14,15 +15,21 @@ const props = defineProps<{
   value: string,
 }>()
 
-const emit = defineEmits<{
-  (e: 'updateValue', val: string): void
-}>()
+const emit = defineEmits<(e: 'updateValue', val: string) => void>()
+
+const {locale, t} = useI18n();
 
 const internalType = ref<InputType>()
 const internalValue = ref(props.value)
-const locale = ref('en-US') // et-EE
+const getDatepickerLocale = () => {
+  if (Language.ET === locale.value as Language) {
+    return LanguageCode.ET_EE;
+  } else {
+    return LanguageCode.EN_US;
+  }
+}
 
-const {t} = useI18n();
+const datepickerLocale = ref(getDatepickerLocale())
 
 const showDatepicker = () => internalType.value === 'date';
 
@@ -62,7 +69,7 @@ watch(() => props.value, (newVal) => {
             v-if="showDatepicker()"
             v-model="internalValue"
             :clearable="false"
-            :locale="locale"
+            :locale="datepickerLocale"
             :enable-time-picker="false"
             :id="`date-input-${id}`"
             :placeholder="placeholder"
@@ -77,7 +84,3 @@ watch(() => props.value, (newVal) => {
     </BRow>
   </BFormGroup>
 </template>
-
-<style scoped>
-
-</style>

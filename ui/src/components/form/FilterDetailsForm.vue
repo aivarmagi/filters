@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import CriteriaGroup from "@/components/form/CriteriaGroup.vue";
-import type {Option} from "@/models/Option";
 import RadioGroup from "@/components/form/RadioGroup.vue";
 import type {Criteria} from "@/models/Criteria";
 import {useI18n} from "vue-i18n";
@@ -117,7 +116,3 @@ const {t} = useI18n()
     </BRow>
   </BForm>
 </template>
-
-<style scoped>
-
-</style>

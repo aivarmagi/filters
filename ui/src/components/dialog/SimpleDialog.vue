@@ -54,7 +54,3 @@ watch(() => props.show, (newVal) => {
     {{ props.message }}
   </BModal>
 </template>
-
-<style scoped>
-
-</style>
